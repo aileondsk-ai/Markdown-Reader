@@ -79,6 +79,29 @@ export const api = {
         401: errorSchemas.unauthorized,
       },
     },
+    createBatch: {
+      method: 'POST' as const,
+      path: '/api/assessments/batch',
+      input: z.object({
+        images: z.array(z.string()).min(1).max(10),
+        persona: z.enum(['sujin', 'minsu', 'jihyun']),
+      }),
+      responses: {
+        201: z.object({
+          individual: z.array(z.custom<typeof assessments.$inferSelect>()),
+          summary: z.object({
+            overallScores: z.object({
+              harmony: z.number(),
+              trend: z.number(),
+              body: z.number(),
+            }),
+            overallFeedback: z.string(),
+          }),
+        }),
+        400: errorSchemas.validation,
+        401: errorSchemas.unauthorized,
+      },
+    },
   },
 };
 

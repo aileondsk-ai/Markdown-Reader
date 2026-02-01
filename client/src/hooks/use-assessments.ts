@@ -60,3 +60,33 @@ export function useCreateAssessment() {
     },
   });
 }
+
+type CreateBatchAssessmentInput = z.infer<typeof api.assessments.createBatch.input>;
+
+export function useCreateBatchAssessment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: CreateBatchAssessmentInput) => {
+      const res = await fetch(api.assessments.createBatch.path, {
+        method: api.assessments.createBatch.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("다중 이미지 분석을 위해 로그인이 필요합니다");
+        if (res.status === 400) {
+          const error = await res.json();
+          throw new Error(error.message || "잘못된 요청입니다");
+        }
+        throw new Error("다중 이미지 분석에 실패했습니다");
+      }
+
+      return api.assessments.createBatch.responses[201].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.assessments.list.path] });
+    },
+  });
+}
