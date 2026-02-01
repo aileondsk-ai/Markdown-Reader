@@ -9,6 +9,7 @@ import Test from "@/pages/Test";
 import Evaluate from "@/pages/Evaluate";
 import Profile from "@/pages/Profile";
 import History from "@/pages/History";
+import Progress from "@/pages/Progress";
 import NotFound from "@/pages/not-found";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -24,6 +25,7 @@ function Router() {
           <Route path="/evaluate" component={Evaluate} />
           <Route path="/profile" component={Profile} />
           <Route path="/history" component={History} />
+          <Route path="/progress" component={Progress} />
           <Route component={NotFound} />
         </Switch>
       </main>

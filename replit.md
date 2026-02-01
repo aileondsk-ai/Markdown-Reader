@@ -32,7 +32,7 @@ Preferred communication style: Simple, everyday language.
 - **Key Tables**:
   - `users` and `sessions` (Replit Auth - do not modify)
   - `sit_results` - Style Identity Type test results with JSON scores
-  - `assessments` - AI fashion evaluations with persona, scores, and feedback
+  - `assessments` - AI fashion evaluations with persona, scores, feedback, and isFavorite flag
   - `conversations` and `messages` - Chat history for AI interactions
 
 ### AI Integration
@@ -45,7 +45,7 @@ Preferred communication style: Simple, everyday language.
 client/           # React frontend
   src/
     components/   # UI components (shadcn/ui based)
-    pages/        # Route pages (Home, Test, Evaluate, Profile)
+    pages/        # Route pages (Home, Test, Evaluate, Profile, History, Progress)
     hooks/        # React Query hooks for API calls
     lib/          # Utilities and SIT type definitions
 server/           # Express backend
