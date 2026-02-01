@@ -10,9 +10,9 @@ import { RadarChart } from "@/components/RadarChart";
 import { motion } from "framer-motion";
 
 const PERSONAS = [
-  { id: "sujin", name: "Editor Sujin", role: "Vogue Editor", desc: "Sharp, trend-focused, brutal honesty." },
-  { id: "minsu", name: "Photographer Minsu", role: "Street Snapper", desc: "Focuses on vibe, silhouette, and authenticity." },
-  { id: "jihyun", name: "Designer Jihyun", role: "Minimalist Designer", desc: "Technical details, fabric quality, and harmony." },
+  { id: "sujin", name: "패션 에디터 수진", role: "매거진 에디터", desc: "트렌드 적합성과 전체 조화를 전문적으로 평가합니다." },
+  { id: "minsu", name: "포토그래퍼 민수", role: "스트리트 사진작가", desc: "개성과 분위기, 진정성에 초점을 맞춥니다." },
+  { id: "jihyun", name: "스타일리스트 지현", role: "연예인 스타일리스트", desc: "체형 보완과 컬러 매칭을 세심하게 분석합니다." },
 ];
 
 export default function Evaluate() {
@@ -43,12 +43,12 @@ export default function Evaluate() {
     if (!preview) return;
     
     analyze({
-      image: preview, // Base64 string
+      image: preview,
       persona,
     }, {
       onError: (err) => {
         toast({
-          title: "Analysis Failed",
+          title: "분석 실패",
           description: err.message,
           variant: "destructive",
         });
@@ -67,10 +67,10 @@ export default function Evaluate() {
         <div className="grid md:grid-cols-2 gap-8 items-start">
           <div className="space-y-6">
             <Card className="overflow-hidden rounded-2xl border-0 shadow-xl">
-              <img src={result.imageUrl} alt="Analyzed Outfit" className="w-full h-auto object-cover" />
+              <img src={result.imageUrl} alt="분석된 착장" className="w-full h-auto object-cover" />
             </Card>
             <div className="bg-card p-6 rounded-2xl border shadow-sm">
-              <h3 className="font-bold mb-4 font-display text-lg">Style Scores</h3>
+              <h3 className="font-bold mb-4 font-display text-lg">스타일 점수</h3>
               <RadarChart data={result.scores as Record<string, number>} />
             </div>
           </div>
@@ -82,21 +82,20 @@ export default function Evaluate() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold font-display">{PERSONAS.find(p => p.id === result.persona)?.name}</h2>
-                <p className="text-muted-foreground text-sm">Analysis Result</p>
+                <p className="text-muted-foreground text-sm">분석 결과</p>
               </div>
             </div>
             
             <Card className="p-8 shadow-lg border-primary/10 bg-gradient-to-br from-card to-muted/20">
               <div className="prose prose-sm dark:prose-invert max-w-none">
-                {/* Simple markdown rendering */}
                 {result.feedback.split('\n').map((line, i) => (
                   <p key={i} className="mb-2 leading-relaxed">{line}</p>
                 ))}
               </div>
             </Card>
             
-            <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
-              Analyze Another Outfit
+            <Button onClick={() => window.location.reload()} variant="outline" className="w-full" data-testid="button-analyze-another">
+              다른 착장 분석하기
             </Button>
           </div>
         </div>
@@ -107,9 +106,9 @@ export default function Evaluate() {
   return (
     <div className="container max-w-4xl mx-auto px-4 py-12 md:py-20">
       <div className="text-center mb-12 space-y-4">
-        <h1 className="text-4xl md:text-5xl font-display font-bold">AI Style Evaluation</h1>
+        <h1 className="text-4xl md:text-5xl font-display font-bold">AI 패션 평가</h1>
         <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-          Upload your outfit and get professional feedback from our AI fashion personas.
+          착장 사진을 업로드하고 AI 패션 페르소나로부터 전문적인 피드백을 받아보세요.
         </p>
       </div>
 
@@ -123,6 +122,7 @@ export default function Evaluate() {
                   key={p.id} 
                   value={p.id}
                   className="py-3 rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
+                  data-testid={`tab-persona-${p.id}`}
                 >
                   <div className="text-center">
                     <div className="font-bold">{p.name}</div>
@@ -147,44 +147,46 @@ export default function Evaluate() {
                 border-2 border-dashed rounded-3xl p-12 text-center cursor-pointer transition-all duration-300
                 ${isDragActive ? 'border-primary bg-primary/5 scale-[1.01]' : 'border-border hover:border-primary/50 hover:bg-muted/30'}
               `}
+              data-testid="dropzone-upload"
             >
               <input {...getInputProps()} />
               <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
                 <UploadCloud className="w-10 h-10 text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Drag & Drop or Click to Upload</h3>
-              <p className="text-muted-foreground">Supports JPG, PNG (Max 5MB)</p>
+              <h3 className="text-xl font-bold mb-2">드래그 앤 드롭 또는 클릭하여 업로드</h3>
+              <p className="text-muted-foreground">JPG, PNG 지원 (최대 5MB)</p>
             </div>
           ) : (
             <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-black/5 group">
-              <img src={preview} alt="Preview" className="w-full h-96 object-cover" />
+              <img src={preview} alt="미리보기" className="w-full h-96 object-cover" />
               <div className="absolute top-4 right-4">
                 <Button 
                   size="icon" 
                   variant="destructive" 
                   onClick={(e) => { e.stopPropagation(); clearImage(); }}
                   className="rounded-full shadow-lg"
+                  data-testid="button-clear-image"
                 >
                   <X className="w-5 h-5" />
                 </Button>
               </div>
-              {/* Analyze Overlay Button */}
               <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 to-transparent flex justify-center pb-8 pt-20">
                  <Button 
                   size="lg" 
                   onClick={handleAnalyze} 
                   disabled={isPending}
                   className="h-14 px-10 rounded-full text-lg font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-transform"
+                  data-testid="button-analyze"
                 >
                   {isPending ? (
                     <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Analyzing...
+                      분석 중...
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5 mr-2" />
-                      Analyze Outfit
+                      착장 분석하기
                     </>
                   )}
                 </Button>

@@ -1,12 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { 
-  NavigationMenu, 
-  NavigationMenuItem, 
-  NavigationMenuList, 
-  navigationMenuTriggerStyle 
-} from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 import { Shirt, User, Sparkles, LogIn, LogOut } from "lucide-react";
 
@@ -27,15 +21,15 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
-          <Link href="/test" className={cn("text-sm font-medium transition-colors hover:text-primary", isActive("/test") ? "text-primary" : "text-muted-foreground")}>
-            Identity Test
+          <Link href="/test" className={cn("text-sm font-medium transition-colors hover:text-primary", isActive("/test") ? "text-primary" : "text-muted-foreground")} data-testid="link-test">
+            스타일 테스트
           </Link>
-          <Link href="/evaluate" className={cn("text-sm font-medium transition-colors hover:text-primary", isActive("/evaluate") ? "text-primary" : "text-muted-foreground")}>
-            AI Evaluation
+          <Link href="/evaluate" className={cn("text-sm font-medium transition-colors hover:text-primary", isActive("/evaluate") ? "text-primary" : "text-muted-foreground")} data-testid="link-evaluate">
+            AI 평가
           </Link>
           {user && (
-            <Link href="/profile" className={cn("text-sm font-medium transition-colors hover:text-primary", isActive("/profile") ? "text-primary" : "text-muted-foreground")}>
-              Profile
+            <Link href="/profile" className={cn("text-sm font-medium transition-colors hover:text-primary", isActive("/profile") ? "text-primary" : "text-muted-foreground")} data-testid="link-profile">
+              프로필
             </Link>
           )}
         </nav>
@@ -44,23 +38,24 @@ export function Navbar() {
           {user ? (
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground hidden sm:inline-block">
-                Hi, {user.firstName || user.email?.split('@')[0]}
+                안녕하세요, {user.firstName || user.email?.split('@')[0]}님
               </span>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => logout()}
                 className="gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                data-testid="button-logout"
               >
                 <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Logout</span>
+                <span className="hidden sm:inline">로그아웃</span>
               </Button>
             </div>
           ) : (
             <a href="/api/login">
-              <Button size="sm" className="gap-2 font-medium shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all">
+              <Button size="sm" className="gap-2 font-medium shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all" data-testid="button-login">
                 <LogIn className="h-4 w-4" />
-                Login
+                로그인
               </Button>
             </a>
           )}

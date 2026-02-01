@@ -1,9 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@shared/routes";
 
-// Define input type manually since it's a z.record in the route
+// Define input type matching shared/routes.ts
 type SubmitSitInput = {
   answers: Record<string, string>;
+  calculatedType: string;
+  scores: {
+    IE: number;
+    WC: number;
+    SN: number;
+    MB: number;
+  };
 };
 
 export function useLatestSitResult() {

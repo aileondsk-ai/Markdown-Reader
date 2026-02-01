@@ -25,6 +25,13 @@ export const api = {
       path: '/api/sit/submit',
       input: z.object({
         answers: z.record(z.string()), // Question ID -> Answer Value
+        calculatedType: z.string(), // 클라이언트에서 계산된 SIT 유형
+        scores: z.object({
+          IE: z.number(),
+          WC: z.number(),
+          SN: z.number(),
+          MB: z.number(),
+        }),
       }),
       responses: {
         201: z.custom<typeof sitResults.$inferSelect>(),

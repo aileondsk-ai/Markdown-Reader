@@ -14,26 +14,26 @@ export function Footer() {
               <span className="font-display text-xl font-bold tracking-tight">StyleFinder AI</span>
             </Link>
             <p className="text-muted-foreground leading-relaxed max-w-sm">
-              Discover your true fashion identity with AI-powered analysis. 
-              Get personalized recommendations from virtual stylists and elevate your wardrobe.
+              AI 기반 분석으로 당신만의 패션 정체성을 발견하세요. 
+              가상 스타일리스트로부터 맞춤형 추천을 받고 옷장을 업그레이드하세요.
             </p>
           </div>
           
           <div>
-            <h4 className="font-bold mb-4">Features</h4>
+            <h4 className="font-bold mb-4">기능</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><Link href="/test" className="hover:text-primary transition-colors">Style Identity Test</Link></li>
-              <li><Link href="/evaluate" className="hover:text-primary transition-colors">AI Evaluation</Link></li>
-              <li><Link href="/profile" className="hover:text-primary transition-colors">Personal Profile</Link></li>
+              <li><Link href="/test" className="hover:text-primary transition-colors">스타일 정체성 테스트</Link></li>
+              <li><Link href="/evaluate" className="hover:text-primary transition-colors">AI 패션 평가</Link></li>
+              <li><Link href="/profile" className="hover:text-primary transition-colors">개인 프로필</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-bold mb-4">Legal</h4>
+            <h4 className="font-bold mb-4">법적 고지</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Cookie Policy</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">개인정보처리방침</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">이용약관</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">쿠키 정책</a></li>
             </ul>
           </div>
         </div>

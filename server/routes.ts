@@ -18,30 +18,29 @@ export async function registerRoutes(
   app.post(api.sit.submit.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
-    // Mock SIT calculation logic
-    // In reality, this would be a complex algorithm based on answers
-    // For MVP, we randomly assign or use a simple heuristic
-    // Let's pretend we calculated it:
-    
-    // Random SIT type for demo if logic not fully implemented yet
-    const types = ["IWSM", "IWSB", "IWNM", "IWNB", "ICSM", "ICSB", "ICNM", "ICNB", 
-                   "EWSM", "EWSB", "EWNM", "EWNB", "ECSM", "ECSB", "ECNM", "ECNB"];
-    const randomType = types[Math.floor(Math.random() * types.length)];
-    
-    const scores = {
-      I: Math.floor(Math.random() * 100),
-      W: Math.floor(Math.random() * 100),
-      S: Math.floor(Math.random() * 100),
-      M: Math.floor(Math.random() * 100),
-    };
+    try {
+      const validatedData = api.sit.submit.input.parse(req.body);
+      const { calculatedType, scores } = validatedData;
+      
+      // 유효한 SIT 타입 검증
+      const validTypes = ["IWSM", "IWSB", "IWNM", "IWNB", "ICSM", "ICSB", "ICNM", "ICNB", 
+                          "EWSM", "EWSB", "EWNM", "EWNB", "ECSM", "ECSB", "ECNM", "ECNB"];
+      
+      const sitType = validTypes.includes(calculatedType) ? calculatedType : "EWSM";
 
-    const result = await storage.createSitResult({
-      userId: (req.user as any).claims.sub,
-      sitType: randomType,
-      scores: scores,
-    });
+      const result = await storage.createSitResult({
+        userId: (req.user as any).claims.sub,
+        sitType: sitType,
+        scores: scores,
+      });
 
-    res.status(201).json(result);
+      res.status(201).json(result);
+    } catch (err: any) {
+      if (err.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid input data", field: err.errors?.[0]?.path?.join('.') });
+      }
+      throw err;
+    }
   });
 
   app.get(api.sit.latest.path, async (req, res) => {
