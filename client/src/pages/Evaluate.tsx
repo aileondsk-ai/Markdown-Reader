@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, UploadCloud, Sparkles, X, CheckCircle2, ImagePlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { RadarChart } from "@/components/RadarChart";
+import { ShareCard } from "@/components/ShareCard";
 import { motion, AnimatePresence } from "framer-motion";
 
 const PERSONAS = [
@@ -245,6 +246,15 @@ export default function Evaluate() {
               </div>
             </Card>
             
+            <div className="border-t pt-6 mt-6">
+              <h3 className="font-bold mb-4 text-center">결과 공유하기</h3>
+              <ShareCard 
+                imageUrl={result.imageUrl}
+                personaName={PERSONAS.find(p => p.id === result.persona)?.name || ""}
+                scores={result.scores as { harmony: number; trend: number; body: number }}
+              />
+            </div>
+
             <Button onClick={() => window.location.reload()} variant="outline" className="w-full" data-testid="button-analyze-another">
               다른 착장 분석하기
             </Button>
@@ -322,6 +332,17 @@ export default function Evaluate() {
             </motion.div>
           ))}
         </div>
+
+        {multiResult.individual.length > 0 && (
+          <div className="mt-8 border-t pt-8">
+            <h3 className="font-bold text-xl mb-4 font-display text-center">대표 결과 공유하기</h3>
+            <ShareCard 
+              imageUrl={multiResult.individual[0].imageUrl}
+              personaName={PERSONAS.find(p => p.id === persona)?.name || ""}
+              scores={multiResult.individual[0].scores}
+            />
+          </div>
+        )}
 
         <div className="mt-8 text-center">
           <Button onClick={() => window.location.reload()} variant="outline" size="lg" data-testid="button-analyze-another">
