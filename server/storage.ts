@@ -1,9 +1,9 @@
 import { db } from "./db";
 import { 
-  sitResults, assessments, users,
+  sitResults, assessments, users, conversations, messages,
   type InsertSitResult, type SitResult,
   type InsertAssessment, type Assessment,
-  type User
+  type User, type Conversation, type Message, type InsertConversation, type InsertMessage
 } from "@shared/schema";
 import { eq, desc, and, gte, lt, sql } from "drizzle-orm";
 
@@ -156,6 +156,56 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
+  }
+
+  // Chat Conversations
+  async createConversation(userId: string, persona: string, title: string): Promise<Conversation> {
+    const [conversation] = await db
+      .insert(conversations)
+      .values({ userId, persona, title })
+      .returning();
+    return conversation;
+  }
+
+  async getConversations(userId: string): Promise<Conversation[]> {
+    return db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.userId, userId))
+      .orderBy(desc(conversations.createdAt));
+  }
+
+  async getConversation(id: number): Promise<Conversation | undefined> {
+    const [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.id, id));
+    return conversation;
+  }
+
+  async deleteConversation(id: number): Promise<boolean> {
+    const result = await db
+      .delete(conversations)
+      .where(eq(conversations.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  // Messages
+  async createMessage(conversationId: number, role: string, content: string): Promise<Message> {
+    const [message] = await db
+      .insert(messages)
+      .values({ conversationId, role, content })
+      .returning();
+    return message;
+  }
+
+  async getMessages(conversationId: number): Promise<Message[]> {
+    return db
+      .select()
+      .from(messages)
+      .where(eq(messages.conversationId, conversationId))
+      .orderBy(messages.createdAt);
   }
 }
 

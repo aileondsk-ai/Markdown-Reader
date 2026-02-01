@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertSitResultSchema, insertAssessmentSchema, sitResults, assessments } from './schema';
+import { insertSitResultSchema, insertAssessmentSchema, sitResults, assessments, conversations, messages } from './schema';
 
 // Shared error schemas
 export const errorSchemas = {
@@ -133,6 +133,64 @@ export const api = {
           favoriteCount: z.number(),
           monthlyCount: z.number(),
         }),
+        401: errorSchemas.unauthorized,
+      },
+    },
+  },
+  chat: {
+    createConversation: {
+      method: 'POST' as const,
+      path: '/api/chat/conversations',
+      input: z.object({
+        persona: z.enum(['sujin', 'minsu', 'jihyun']),
+      }),
+      responses: {
+        201: z.custom<typeof conversations.$inferSelect>(),
+        401: errorSchemas.unauthorized,
+      },
+    },
+    listConversations: {
+      method: 'GET' as const,
+      path: '/api/chat/conversations',
+      responses: {
+        200: z.array(z.custom<typeof conversations.$inferSelect>()),
+        401: errorSchemas.unauthorized,
+      },
+    },
+    getConversation: {
+      method: 'GET' as const,
+      path: '/api/chat/conversations/:id',
+      responses: {
+        200: z.object({
+          conversation: z.custom<typeof conversations.$inferSelect>(),
+          messages: z.array(z.custom<typeof messages.$inferSelect>()),
+        }),
+        404: errorSchemas.notFound,
+        401: errorSchemas.unauthorized,
+      },
+    },
+    deleteConversation: {
+      method: 'DELETE' as const,
+      path: '/api/chat/conversations/:id',
+      responses: {
+        200: z.object({ success: z.boolean() }),
+        404: errorSchemas.notFound,
+        401: errorSchemas.unauthorized,
+      },
+    },
+    sendMessage: {
+      method: 'POST' as const,
+      path: '/api/chat/conversations/:id/messages',
+      input: z.object({
+        content: z.string().min(1),
+        image: z.string().optional(),
+      }),
+      responses: {
+        201: z.object({
+          userMessage: z.custom<typeof messages.$inferSelect>(),
+          aiMessage: z.custom<typeof messages.$inferSelect>(),
+        }),
+        404: errorSchemas.notFound,
         401: errorSchemas.unauthorized,
       },
     },

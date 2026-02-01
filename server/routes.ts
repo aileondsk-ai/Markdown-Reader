@@ -360,5 +360,167 @@ ${images.length}장의 착장을 분석한 결과입니다.
     }
   });
 
+  // === CHAT API ===
+  const CHAT_PERSONA_PROMPTS: Record<string, { name: string; systemPrompt: string }> = {
+    sujin: {
+      name: '수진',
+      systemPrompt: `당신은 트렌디한 25세 패션 인플루언서 '수진'입니다. 최신 트렌드에 민감하고 SNS 스타일링에 능합니다.
+특징: 친근하고 활발한 말투, 이모지 사용, 트렌드 용어 자주 사용
+말투 예시: "오 대박~ 이거 진짜 힙해요! 요즘 완전 핫한 스타일이에요 ✨"
+당신의 역할: 패션 관련 질문에 친근하게 답변하고, 스타일링 조언을 제공합니다.
+이미지가 첨부되면 착장을 분석하고 구체적인 피드백을 제공합니다.`
+    },
+    minsu: {
+      name: '민수',
+      systemPrompt: `당신은 클래식하고 포멀한 스타일을 선호하는 30세 패션 컨설턴트 '민수'입니다.
+특징: 정중하고 전문적인 말투, 디테일 중시, 품질과 핏 강조
+말투 예시: "말씀하신 부분에서 핏이 중요합니다. 어깨선이 정확히 맞아야 전체적인 실루엣이 살아납니다."
+당신의 역할: 비즈니스 캐주얼, 포멀 웨어 중심의 조언을 제공합니다.
+이미지가 첨부되면 착장을 분석하고 구체적인 피드백을 제공합니다.`
+    },
+    jihyun: {
+      name: '지현',
+      systemPrompt: `당신은 미니멀하고 감각적인 스타일의 28세 스타일리스트 '지현'입니다.
+특징: 차분하고 세련된 말투, 색감과 비율 강조, 심플함 추구
+말투 예시: "이 조합에서 색감 밸런스를 조금만 조절하면 훨씬 세련되게 보일 거예요."
+당신의 역할: 컬러 매칭, 비율, 미니멀 스타일링에 대한 조언을 제공합니다.
+이미지가 첨부되면 착장을 분석하고 구체적인 피드백을 제공합니다.`
+    }
+  };
+
+  // Create new conversation
+  app.post(api.chat.createConversation.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { persona } = api.chat.createConversation.input.parse(req.body);
+      const userId = (req.user as any).claims.sub;
+      const personaInfo = CHAT_PERSONA_PROMPTS[persona];
+      const title = `${personaInfo.name}과의 대화`;
+      
+      const conversation = await storage.createConversation(userId, persona, title);
+      res.status(201).json(conversation);
+    } catch (err) {
+      console.error(err);
+      res.status(400).json({ message: "대화를 시작할 수 없습니다" });
+    }
+  });
+
+  // List user's conversations
+  app.get(api.chat.listConversations.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const userId = (req.user as any).claims.sub;
+    const convs = await storage.getConversations(userId);
+    res.json(convs);
+  });
+
+  // Get conversation with messages
+  app.get(api.chat.getConversation.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const id = Number(req.params.id);
+    
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    
+    const conversation = await storage.getConversation(id);
+    if (!conversation) return res.status(404).json({ message: "대화를 찾을 수 없습니다" });
+    
+    // Check ownership
+    if (conversation.userId !== (req.user as any).claims.sub) {
+      return res.status(403).json({ message: "접근 권한이 없습니다" });
+    }
+    
+    const msgs = await storage.getMessages(id);
+    res.json({ conversation, messages: msgs });
+  });
+
+  // Delete conversation
+  app.delete(api.chat.deleteConversation.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const id = Number(req.params.id);
+    
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    
+    const conversation = await storage.getConversation(id);
+    if (!conversation) return res.status(404).json({ message: "대화를 찾을 수 없습니다" });
+    
+    if (conversation.userId !== (req.user as any).claims.sub) {
+      return res.status(403).json({ message: "접근 권한이 없습니다" });
+    }
+    
+    const deleted = await storage.deleteConversation(id);
+    res.json({ success: deleted });
+  });
+
+  // Send message and get AI response
+  app.post(api.chat.sendMessage.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const conversationId = Number(req.params.id);
+    
+    if (isNaN(conversationId)) return res.status(400).json({ message: "Invalid ID" });
+    
+    const conversation = await storage.getConversation(conversationId);
+    if (!conversation) return res.status(404).json({ message: "대화를 찾을 수 없습니다" });
+    
+    if (conversation.userId !== (req.user as any).claims.sub) {
+      return res.status(403).json({ message: "접근 권한이 없습니다" });
+    }
+    
+    try {
+      const { content, image } = api.chat.sendMessage.input.parse(req.body);
+      
+      // Save user message
+      const userMessage = await storage.createMessage(conversationId, 'user', content);
+      
+      // Get conversation history
+      const history = await storage.getMessages(conversationId);
+      const persona = conversation.persona || 'sujin';
+      const personaInfo = CHAT_PERSONA_PROMPTS[persona];
+      
+      // Build messages for AI
+      const aiMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: any }> = [
+        { role: 'system', content: personaInfo.systemPrompt }
+      ];
+      
+      // Add history (limit to last 10 messages for context)
+      const recentHistory = history.slice(-10);
+      for (const msg of recentHistory) {
+        if (msg.role === 'user') {
+          aiMessages.push({ role: 'user', content: msg.content });
+        } else if (msg.role === 'assistant') {
+          aiMessages.push({ role: 'assistant', content: msg.content });
+        }
+      }
+      
+      // Add current message
+      if (image) {
+        aiMessages.push({
+          role: 'user',
+          content: [
+            { type: 'text', text: content },
+            { type: 'image_url', image_url: { url: image } }
+          ]
+        });
+      } else {
+        aiMessages.push({ role: 'user', content });
+      }
+      
+      // Call AI
+      const { openai } = await import("./replit_integrations/image/client");
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: aiMessages as any,
+        max_tokens: 1000,
+      });
+      
+      const aiContent = response.choices[0]?.message?.content || "죄송해요, 응답을 생성하지 못했어요.";
+      const aiMessage = await storage.createMessage(conversationId, 'assistant', aiContent);
+      
+      res.status(201).json({ userMessage, aiMessage });
+    } catch (err) {
+      console.error('Chat error:', err);
+      res.status(500).json({ message: "메시지를 처리할 수 없습니다" });
+    }
+  });
+
   return httpServer;
 }
