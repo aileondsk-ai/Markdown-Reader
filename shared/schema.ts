@@ -31,6 +31,7 @@ export const assessments = pgTable("assessments", {
   persona: text("persona").notNull(), // "sujin", "minsu", "jihyun"
   scores: jsonb("scores").notNull(), // { harmony: 8, trend: 7, body: 9 }
   feedback: text("feedback").notNull(), // Markdown formatted analysis
+  isFavorite: boolean("is_favorite").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

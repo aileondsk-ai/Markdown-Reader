@@ -192,6 +192,51 @@ ${personaInfo.style}
     res.json(item);
   });
 
+  // === ASSESSMENT HISTORY API ===
+  app.patch(api.assessments.toggleFavorite.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const id = Number(req.params.id);
+    const item = await storage.getAssessment(id);
+    if (!item) return res.status(404).json({ message: "Not found" });
+    if (item.userId !== (req.user as any).claims.sub) return res.sendStatus(403);
+    
+    const updated = await storage.toggleFavorite(id);
+    res.json(updated);
+  });
+
+  app.get(api.assessments.getByMonth.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const year = Number(req.params.year);
+    const month = Number(req.params.month);
+    
+    if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+      return res.status(400).json({ message: "Invalid year or month" });
+    }
+    
+    const list = await storage.getAssessmentsByMonth(
+      (req.user as any).claims.sub, 
+      year, 
+      month
+    );
+    res.json(list);
+  });
+
+  app.get(api.assessments.stats.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    try {
+      const stats = await storage.getAssessmentStats((req.user as any).claims.sub);
+      res.json(stats);
+    } catch (error) {
+      console.error('Stats API error:', error);
+      res.json({
+        totalCount: 0,
+        averageScores: { harmony: 0, trend: 0, body: 0 },
+        favoriteCount: 0,
+        monthlyCount: 0,
+      });
+    }
+  });
+
   // === BATCH ASSESSMENT API (다중 이미지 분석) ===
   app.post(api.assessments.createBatch.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import type { z } from "zod";
+import { apiRequest } from "@/lib/queryClient";
 
 type CreateAssessmentInput = z.infer<typeof api.assessments.create.input>;
 
@@ -87,6 +88,49 @@ export function useCreateBatchAssessment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.assessments.list.path] });
+    },
+  });
+}
+
+export function useAssessmentsByMonth(year: number, month: number) {
+  return useQuery({
+    queryKey: [api.assessments.getByMonth.path, year, month],
+    queryFn: async () => {
+      const url = buildUrl(api.assessments.getByMonth.path, { year, month });
+      const res = await fetch(url, { credentials: "include" });
+      if (res.status === 401) return [];
+      if (!res.ok) throw new Error("평가 목록을 불러오는데 실패했습니다");
+      return api.assessments.getByMonth.responses[200].parse(await res.json());
+    },
+    retry: false,
+  });
+}
+
+export function useAssessmentStats() {
+  return useQuery({
+    queryKey: [api.assessments.stats.path],
+    queryFn: async () => {
+      const res = await fetch(api.assessments.stats.path, { credentials: "include" });
+      if (res.status === 401) return null;
+      if (!res.ok) throw new Error("통계를 불러오는데 실패했습니다");
+      return api.assessments.stats.responses[200].parse(await res.json());
+    },
+    retry: false,
+  });
+}
+
+export function useToggleFavorite() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.assessments.toggleFavorite.path, { id });
+      const res = await apiRequest("PATCH", url);
+      return api.assessments.toggleFavorite.responses[200].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.assessments.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.assessments.stats.path] });
+      queryClient.invalidateQueries({ queryKey: [api.assessments.getByMonth.path] });
     },
   });
 }

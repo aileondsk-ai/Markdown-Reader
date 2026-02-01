@@ -8,6 +8,7 @@ import Home from "@/pages/Home";
 import Test from "@/pages/Test";
 import Evaluate from "@/pages/Evaluate";
 import Profile from "@/pages/Profile";
+import History from "@/pages/History";
 import NotFound from "@/pages/not-found";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -22,6 +23,7 @@ function Router() {
           <Route path="/test" component={Test} />
           <Route path="/evaluate" component={Evaluate} />
           <Route path="/profile" component={Profile} />
+          <Route path="/history" component={History} />
           <Route component={NotFound} />
         </Switch>
       </main>

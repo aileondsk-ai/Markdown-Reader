@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Shirt, User, Sparkles, LogIn, LogOut } from "lucide-react";
+import { Shirt, User, Sparkles, LogIn, LogOut, Calendar } from "lucide-react";
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -28,9 +28,14 @@ export function Navbar() {
             AI 평가
           </Link>
           {user && (
-            <Link href="/profile" className={cn("text-sm font-medium transition-colors hover:text-primary", isActive("/profile") ? "text-primary" : "text-muted-foreground")} data-testid="link-profile">
-              프로필
-            </Link>
+            <>
+              <Link href="/history" className={cn("text-sm font-medium transition-colors hover:text-primary", isActive("/history") ? "text-primary" : "text-muted-foreground")} data-testid="link-history">
+                히스토리
+              </Link>
+              <Link href="/profile" className={cn("text-sm font-medium transition-colors hover:text-primary", isActive("/profile") ? "text-primary" : "text-muted-foreground")} data-testid="link-profile">
+                프로필
+              </Link>
+            </>
           )}
         </nav>
 

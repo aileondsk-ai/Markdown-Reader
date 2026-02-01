@@ -102,6 +102,40 @@ export const api = {
         401: errorSchemas.unauthorized,
       },
     },
+    toggleFavorite: {
+      method: 'PATCH' as const,
+      path: '/api/assessments/:id/favorite',
+      responses: {
+        200: z.custom<typeof assessments.$inferSelect>(),
+        404: errorSchemas.notFound,
+        401: errorSchemas.unauthorized,
+      },
+    },
+    getByMonth: {
+      method: 'GET' as const,
+      path: '/api/assessments/month/:year/:month',
+      responses: {
+        200: z.array(z.custom<typeof assessments.$inferSelect>()),
+        401: errorSchemas.unauthorized,
+      },
+    },
+    stats: {
+      method: 'GET' as const,
+      path: '/api/assessments/stats',
+      responses: {
+        200: z.object({
+          totalCount: z.number(),
+          averageScores: z.object({
+            harmony: z.number(),
+            trend: z.number(),
+            body: z.number(),
+          }),
+          favoriteCount: z.number(),
+          monthlyCount: z.number(),
+        }),
+        401: errorSchemas.unauthorized,
+      },
+    },
   },
 };
 
