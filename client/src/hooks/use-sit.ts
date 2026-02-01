@@ -19,7 +19,7 @@ export function useLatestSitResult() {
     queryFn: async () => {
       const res = await fetch(api.sit.latest.path, { credentials: "include" });
       if (res.status === 401) return null; // Handle unauthorized gracefully
-      if (!res.ok) throw new Error("Failed to fetch latest SIT result");
+      if (!res.ok) throw new Error("최근 테스트 결과를 불러오는데 실패했습니다");
       // The API might return null if no result exists, handled by schema
       const data = await res.json();
       return api.sit.latest.responses[200].parse(data);

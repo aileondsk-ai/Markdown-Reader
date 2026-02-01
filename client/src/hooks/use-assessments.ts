@@ -10,7 +10,7 @@ export function useAssessments() {
     queryFn: async () => {
       const res = await fetch(api.assessments.list.path, { credentials: "include" });
       if (res.status === 401) return []; // Return empty for unauth
-      if (!res.ok) throw new Error("Failed to fetch assessments");
+      if (!res.ok) throw new Error("평가 목록을 불러오는데 실패했습니다");
       return api.assessments.list.responses[200].parse(await res.json());
     },
     retry: false,
@@ -23,9 +23,9 @@ export function useAssessment(id: number) {
     queryFn: async () => {
       const url = buildUrl(api.assessments.get.path, { id });
       const res = await fetch(url, { credentials: "include" });
-      if (res.status === 404) throw new Error("Assessment not found");
-      if (res.status === 401) throw new Error("Unauthorized");
-      if (!res.ok) throw new Error("Failed to fetch assessment");
+      if (res.status === 404) throw new Error("평가를 찾을 수 없습니다");
+      if (res.status === 401) throw new Error("로그인이 필요합니다");
+      if (!res.ok) throw new Error("평가를 불러오는데 실패했습니다");
       return api.assessments.get.responses[200].parse(await res.json());
     },
     retry: false,
@@ -45,12 +45,12 @@ export function useCreateAssessment() {
       });
 
       if (!res.ok) {
-        if (res.status === 401) throw new Error("Please log in to evaluate your style");
+        if (res.status === 401) throw new Error("스타일 평가를 받으려면 로그인이 필요합니다");
         if (res.status === 400) {
           const error = await res.json();
-          throw new Error(error.message || "Invalid request");
+          throw new Error(error.message || "잘못된 요청입니다");
         }
-        throw new Error("Failed to create assessment");
+        throw new Error("평가 생성에 실패했습니다");
       }
 
       return api.assessments.create.responses[201].parse(await res.json());
