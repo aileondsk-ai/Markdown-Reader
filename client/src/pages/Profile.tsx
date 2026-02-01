@@ -65,7 +65,7 @@ export default function Profile() {
                   </div>
                   <p className="text-sm text-muted-foreground">{typeInfo.style}</p>
                   <Link href="/test">
-                    <Button variant="link" className="text-xs text-muted-foreground">테스트 다시하기</Button>
+                    <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" data-testid="button-retake-test">테스트 다시하기</Button>
                   </Link>
                 </div>
               ) : (
