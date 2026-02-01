@@ -1,11 +1,13 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
+import imageCompression from "browser-image-compression";
 import { useCreateAssessment } from "@/hooks/use-assessments";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud, Sparkles, Image as ImageIcon, X } from "lucide-react";
+import { Loader2, UploadCloud, Sparkles, X, CheckCircle2 } from "lucide-react";
 import { RadarChart } from "@/components/RadarChart";
 import { motion } from "framer-motion";
 
@@ -18,20 +20,117 @@ const PERSONAS = [
 export default function Evaluate() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [persona, setPersona] = useState("sujin");
+  const [persona, setPersona] = useState<"sujin" | "minsu" | "jihyun">("sujin");
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [compressionProgress, setCompressionProgress] = useState(0);
+  const [compressionInfo, setCompressionInfo] = useState<{
+    originalSize: number;
+    compressedSize: number;
+  } | null>(null);
   
   const { mutate: analyze, isPending, data: result } = useCreateAssessment();
   const { toast } = useToast();
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      setFile(file);
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const checkImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve({ width: img.width, height: img.height });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("이미지 로드 실패"));
+      };
+      img.src = objectUrl;
+    });
+  };
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const originalFile = acceptedFiles[0];
+    if (!originalFile) return;
+
+    const originalSize = originalFile.size;
+
+    try {
+      setIsCompressing(true);
+      setCompressionProgress(0);
+      setCompressionInfo(null);
+
+      // 이미지 크기 확인
+      const dimensions = await checkImageDimensions(originalFile);
+      const maxDimension = Math.max(dimensions.width, dimensions.height);
+      
+      // 저화질 이미지 경고 (1280px 미만)
+      if (maxDimension < 1280) {
+        toast({
+          title: "이미지 품질 안내",
+          description: "이미지 해상도가 낮아 분석 정확도가 떨어질 수 있습니다.",
+          variant: "default",
+        });
+      }
+
+      // 압축 필요 조건: 2MB 이상 또는 1920px 초과
+      const needsCompression = originalSize > 2 * 1024 * 1024 || maxDimension > 1920;
+
+      let processedFile = originalFile;
+
+      if (needsCompression) {
+        const options = {
+          maxSizeMB: 1.5,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+          fileType: "image/jpeg" as const,
+          initialQuality: 0.85,
+          preserveExif: true,
+          onProgress: (progress: number) => {
+            setCompressionProgress(Math.round(progress));
+          },
+        };
+
+        try {
+          processedFile = await imageCompression(originalFile, options);
+        } catch (compressionError) {
+          console.warn("클라이언트 압축 실패, 원본 사용:", compressionError);
+          toast({
+            title: "이미지 최적화",
+            description: "최적화를 건너뛰고 원본 이미지를 사용합니다.",
+            variant: "default",
+          });
+          processedFile = originalFile;
+        }
+      } else {
+        setCompressionProgress(100);
+      }
+
+      setFile(processedFile);
+      setCompressionInfo({
+        originalSize,
+        compressedSize: processedFile.size,
+      });
+
       const reader = new FileReader();
       reader.onloadend = () => setPreview(reader.result as string);
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(processedFile);
+
+    } catch (error) {
+      console.error("이미지 처리 오류:", error);
+      toast({
+        title: "이미지 처리 오류",
+        description: "이미지를 처리하는 중 문제가 발생했습니다. 다른 이미지를 시도해주세요.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCompressing(false);
     }
-  }, []);
+  }, [toast]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -59,6 +158,8 @@ export default function Evaluate() {
   const clearImage = () => {
     setFile(null);
     setPreview(null);
+    setCompressionInfo(null);
+    setCompressionProgress(0);
   };
 
   if (result) {
@@ -115,7 +216,7 @@ export default function Evaluate() {
       <div className="grid gap-8">
         {/* Persona Selection */}
         <div className="bg-card rounded-2xl p-2 border shadow-sm">
-          <Tabs value={persona} onValueChange={setPersona} className="w-full">
+          <Tabs value={persona} onValueChange={(v) => setPersona(v as "sujin" | "minsu" | "jihyun")} className="w-full">
             <TabsList className="w-full h-auto p-1 bg-muted/50 rounded-xl grid grid-cols-3 gap-2">
               {PERSONAS.map(p => (
                 <TabsTrigger 
@@ -140,7 +241,16 @@ export default function Evaluate() {
 
         {/* Upload Area */}
         <div className="w-full">
-          {!preview ? (
+          {isCompressing ? (
+            <div className="border-2 border-dashed rounded-3xl p-12 text-center border-primary/50 bg-primary/5">
+              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Loader2 className="w-10 h-10 text-primary animate-spin" />
+              </div>
+              <h3 className="text-xl font-bold mb-4">이미지 최적화 중...</h3>
+              <Progress value={compressionProgress} className="max-w-xs mx-auto mb-2" />
+              <p className="text-muted-foreground">{compressionProgress}%</p>
+            </div>
+          ) : !preview ? (
             <div 
               {...getRootProps()} 
               className={`
@@ -154,7 +264,7 @@ export default function Evaluate() {
                 <UploadCloud className="w-10 h-10 text-muted-foreground" />
               </div>
               <h3 className="text-xl font-bold mb-2">드래그 앤 드롭 또는 클릭하여 업로드</h3>
-              <p className="text-muted-foreground">JPG, PNG 지원 (최대 5MB)</p>
+              <p className="text-muted-foreground">JPG, PNG, HEIC 지원 (고해상도 이미지 자동 최적화)</p>
             </div>
           ) : (
             <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-black/5 group">
@@ -170,6 +280,15 @@ export default function Evaluate() {
                   <X className="w-5 h-5" />
                 </Button>
               </div>
+              {compressionInfo && compressionInfo.originalSize !== compressionInfo.compressedSize && (
+                <div className="absolute top-4 left-4 bg-green-500/90 text-white px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {formatFileSize(compressionInfo.originalSize)} → {formatFileSize(compressionInfo.compressedSize)}
+                  <span className="opacity-75">
+                    ({Math.round((1 - compressionInfo.compressedSize / compressionInfo.originalSize) * 100)}% 감소)
+                  </span>
+                </div>
+              )}
               <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 to-transparent flex justify-center pb-8 pt-20">
                  <Button 
                   size="lg" 
