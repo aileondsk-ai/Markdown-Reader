@@ -522,5 +522,172 @@ ${images.length}장의 착장을 분석한 결과입니다.
     }
   });
 
+  // === RECOMMENDATIONS API ===
+  
+  // Get current season based on date
+  function getCurrentSeason(): string {
+    const month = new Date().getMonth() + 1;
+    if (month >= 3 && month <= 5) return 'spring';
+    if (month >= 6 && month <= 8) return 'summer';
+    if (month >= 9 && month <= 11) return 'fall';
+    return 'winter';
+  }
+
+  // Generate recommendation using AI
+  app.post('/api/recommendations', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const userId = (req.user as any).claims.sub;
+      const { occasion, season: requestedSeason } = req.body;
+      
+      if (!occasion) {
+        return res.status(400).json({ message: "상황을 선택해주세요" });
+      }
+
+      const season = requestedSeason || getCurrentSeason();
+      
+      // Get user's SIT type if available
+      const sitResult = await storage.getLatestSitResult(userId);
+      const sitType = sitResult?.sitType || null;
+
+      // Define occasion names
+      const occasionNames: Record<string, string> = {
+        date_casual: '캐주얼 데이트',
+        date_special: '특별한 날 데이트',
+        business_work: '출근',
+        business_meeting: '프레젠테이션/미팅',
+        business_dinner: '회식',
+        first_interview: '면접',
+        first_blind_date: '소개팅',
+        daily_home: '재택근무',
+        daily_cafe: '카페',
+        daily_travel: '여행',
+        event_wedding: '결혼식',
+        event_party: '파티',
+        event_reunion: '동창회',
+      };
+
+      const seasonNames: Record<string, string> = {
+        spring: '봄',
+        summer: '여름',
+        fall: '가을',
+        winter: '겨울',
+      };
+
+      const occasionName = occasionNames[occasion] || occasion;
+      const seasonName = seasonNames[season] || season;
+
+      // Build AI prompt
+      const prompt = `당신은 한국의 패션 스타일리스트입니다.
+다음 조건에 맞는 코디 추천을 JSON 형식으로 제공해주세요.
+
+조건:
+- 상황: ${occasionName}
+- 계절: ${seasonName}
+${sitType ? `- 사용자 스타일 유형: ${sitType}` : ''}
+
+다음 JSON 형식으로 정확히 응답해주세요:
+{
+  "outfitSet": {
+    "top": { "item": "아이템명", "color": "색상", "reason": "추천 이유" },
+    "bottom": { "item": "아이템명", "color": "색상", "reason": "추천 이유" },
+    "shoes": { "item": "아이템명", "color": "색상", "reason": "추천 이유" },
+    "accessory": { "item": "아이템명", "color": "색상", "reason": "추천 이유" }
+  },
+  "reasoning": "전체적인 코디 컨셉과 이 스타일을 추천한 이유 (2-3문장)",
+  "alternatives": [
+    {
+      "name": "대안 스타일 1",
+      "description": "간단한 설명"
+    },
+    {
+      "name": "대안 스타일 2", 
+      "description": "간단한 설명"
+    }
+  ]
+}`;
+
+      const { openai } = await import("./replit_integrations/image/client");
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: '패션 스타일리스트로서 코디를 추천합니다. JSON 형식으로만 응답합니다.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 1000,
+        response_format: { type: 'json_object' },
+      });
+
+      const aiContent = response.choices[0]?.message?.content;
+      if (!aiContent) {
+        return res.status(500).json({ message: "추천을 생성할 수 없습니다" });
+      }
+
+      const parsed = JSON.parse(aiContent);
+
+      // Save recommendation
+      const recommendation = await storage.createRecommendation({
+        userId,
+        season,
+        occasion,
+        sitType,
+        outfitSet: parsed.outfitSet,
+        reasoning: parsed.reasoning,
+        alternatives: parsed.alternatives,
+        isFavorite: false,
+      });
+
+      res.status(201).json(recommendation);
+    } catch (err) {
+      console.error('Recommendation error:', err);
+      res.status(500).json({ message: "추천을 생성할 수 없습니다" });
+    }
+  });
+
+  // Get all recommendations
+  app.get('/api/recommendations', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const userId = (req.user as any).claims.sub;
+    const recs = await storage.getRecommendations(userId);
+    res.json(recs);
+  });
+
+  // Get single recommendation
+  app.get('/api/recommendations/:id', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+
+    const rec = await storage.getRecommendation(id);
+    if (!rec) return res.status(404).json({ message: "추천을 찾을 수 없습니다" });
+
+    const userId = (req.user as any).claims.sub;
+    if (rec.userId !== userId) return res.status(403).json({ message: "권한이 없습니다" });
+
+    res.json(rec);
+  });
+
+  // Toggle favorite
+  app.patch('/api/recommendations/:id/favorite', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+
+    const rec = await storage.getRecommendation(id);
+    if (!rec) return res.status(404).json({ message: "추천을 찾을 수 없습니다" });
+
+    const userId = (req.user as any).claims.sub;
+    if (rec.userId !== userId) return res.status(403).json({ message: "권한이 없습니다" });
+
+    const updated = await storage.toggleRecommendationFavorite(id);
+    res.json(updated);
+  });
+
+  // Get current season
+  app.get('/api/recommendations/season', async (req, res) => {
+    res.json({ season: getCurrentSeason() });
+  });
+
   return httpServer;
 }

@@ -1,9 +1,10 @@
 import { db } from "./db";
 import { 
-  sitResults, assessments, users, conversations, messages,
+  sitResults, assessments, users, conversations, messages, recommendations,
   type InsertSitResult, type SitResult,
   type InsertAssessment, type Assessment,
-  type User, type Conversation, type Message, type InsertConversation, type InsertMessage
+  type User, type Conversation, type Message, type InsertConversation, type InsertMessage,
+  type Recommendation, type InsertRecommendation
 } from "@shared/schema";
 import { eq, desc, and, gte, lt, sql } from "drizzle-orm";
 
@@ -27,6 +28,12 @@ export interface IStorage {
   
   // Users (helper)
   getUser(id: string): Promise<User | undefined>;
+  
+  // Recommendations
+  createRecommendation(recommendation: InsertRecommendation): Promise<Recommendation>;
+  getRecommendations(userId: string): Promise<Recommendation[]>;
+  getRecommendation(id: number): Promise<Recommendation | undefined>;
+  toggleRecommendationFavorite(id: number): Promise<Recommendation | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -206,6 +213,43 @@ export class DatabaseStorage implements IStorage {
       .from(messages)
       .where(eq(messages.conversationId, conversationId))
       .orderBy(messages.createdAt);
+  }
+
+  // Recommendations
+  async createRecommendation(recommendation: InsertRecommendation): Promise<Recommendation> {
+    const [saved] = await db.insert(recommendations).values(recommendation).returning();
+    return saved;
+  }
+
+  async getRecommendations(userId: string): Promise<Recommendation[]> {
+    return db
+      .select()
+      .from(recommendations)
+      .where(eq(recommendations.userId, userId))
+      .orderBy(desc(recommendations.createdAt));
+  }
+
+  async getRecommendation(id: number): Promise<Recommendation | undefined> {
+    if (typeof id !== 'number' || isNaN(id)) {
+      return undefined;
+    }
+    const [result] = await db
+      .select()
+      .from(recommendations)
+      .where(eq(recommendations.id, id));
+    return result;
+  }
+
+  async toggleRecommendationFavorite(id: number): Promise<Recommendation | undefined> {
+    const rec = await this.getRecommendation(id);
+    if (!rec) return undefined;
+    
+    const [updated] = await db
+      .update(recommendations)
+      .set({ isFavorite: !rec.isFavorite })
+      .where(eq(recommendations.id, id))
+      .returning();
+    return updated;
   }
 }
 

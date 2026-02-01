@@ -55,12 +55,41 @@ export const assessmentsRelations = relations(assessments, ({ one }) => ({
   }),
 }));
 
+// === STYLE RECOMMENDATIONS ===
+export const recommendations = pgTable("recommendations", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  season: text("season").notNull(), // "spring", "summer", "fall", "winter"
+  occasion: text("occasion").notNull(), // "date", "business", "casual", etc.
+  sitType: text("sit_type"), // User's SIT type if available
+  outfitSet: jsonb("outfit_set").notNull(), // { top, bottom, shoes, accessory }
+  reasoning: text("reasoning").notNull(), // Why this outfit
+  alternatives: jsonb("alternatives"), // Alternative outfit options
+  isFavorite: boolean("is_favorite").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertRecommendationSchema = createInsertSchema(recommendations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const recommendationsRelations = relations(recommendations, ({ one }) => ({
+  user: one(users, {
+    fields: [recommendations.userId],
+    references: [users.id],
+  }),
+}));
+
 // === TYPES ===
 export type SitResult = typeof sitResults.$inferSelect;
 export type InsertSitResult = z.infer<typeof insertSitResultSchema>;
 
 export type Assessment = typeof assessments.$inferSelect;
 export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
+
+export type Recommendation = typeof recommendations.$inferSelect;
+export type InsertRecommendation = z.infer<typeof insertRecommendationSchema>;
 
 // Request types
 export type SubmitSitRequest = {

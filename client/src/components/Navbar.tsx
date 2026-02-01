@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Shirt, User, Sparkles, LogIn, LogOut, Calendar, TrendingUp, MessageSquare } from "lucide-react";
+import { Shirt, User, Sparkles, LogIn, LogOut, Calendar, TrendingUp, MessageSquare, ShoppingBag } from "lucide-react";
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -37,6 +37,9 @@ export function Navbar() {
               </Link>
               <Link href="/chat" className={cn("text-sm font-medium transition-colors hover:text-primary", isActive("/chat") ? "text-primary" : "text-muted-foreground")} data-testid="link-chat">
                 AI 채팅
+              </Link>
+              <Link href="/recommend" className={cn("text-sm font-medium transition-colors hover:text-primary", isActive("/recommend") ? "text-primary" : "text-muted-foreground")} data-testid="link-recommend">
+                코디 추천
               </Link>
               <Link href="/profile" className={cn("text-sm font-medium transition-colors hover:text-primary", isActive("/profile") ? "text-primary" : "text-muted-foreground")} data-testid="link-profile">
                 프로필

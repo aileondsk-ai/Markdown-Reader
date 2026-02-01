@@ -34,6 +34,7 @@ Preferred communication style: Simple, everyday language.
   - `sit_results` - Style Identity Type test results with JSON scores
   - `assessments` - AI fashion evaluations with persona, scores, feedback, and isFavorite flag
   - `conversations` and `messages` - Chat history for AI interactions
+  - `recommendations` - TPO-based outfit recommendations with outfitSet, reasoning, alternatives
 
 ### AI Integration
 - **Provider**: OpenAI via Replit AI Integrations
@@ -45,7 +46,7 @@ Preferred communication style: Simple, everyday language.
 client/           # React frontend
   src/
     components/   # UI components (shadcn/ui based)
-    pages/        # Route pages (Home, Test, Evaluate, Profile, History, Progress)
+    pages/        # Route pages (Home, Test, Evaluate, Profile, History, Progress, Chat, Recommend)
     hooks/        # React Query hooks for API calls
     lib/          # Utilities and SIT type definitions
 server/           # Express backend

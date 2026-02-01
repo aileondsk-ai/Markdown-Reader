@@ -11,6 +11,7 @@ import Profile from "@/pages/Profile";
 import History from "@/pages/History";
 import Progress from "@/pages/Progress";
 import Chat from "@/pages/Chat";
+import Recommend from "@/pages/Recommend";
 import NotFound from "@/pages/not-found";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -28,6 +29,7 @@ function Router() {
           <Route path="/history" component={History} />
           <Route path="/progress" component={Progress} />
           <Route path="/chat" component={Chat} />
+          <Route path="/recommend" component={Recommend} />
           <Route component={NotFound} />
         </Switch>
       </main>
