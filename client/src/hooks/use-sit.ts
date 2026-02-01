@@ -40,12 +40,12 @@ export function useSubmitSit() {
       });
       
       if (!res.ok) {
-        if (res.status === 401) throw new Error("Please log in to save your results");
+        if (res.status === 401) throw new Error("결과를 저장하려면 로그인이 필요합니다");
         if (res.status === 400) {
           const error = await res.json();
-          throw new Error(error.message || "Invalid answers");
+          throw new Error(error.message || "답변이 올바르지 않습니다");
         }
-        throw new Error("Failed to submit SIT test");
+        throw new Error("테스트 제출에 실패했습니다");
       }
       
       return api.sit.submit.responses[201].parse(await res.json());
