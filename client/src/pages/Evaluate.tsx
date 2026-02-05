@@ -248,7 +248,8 @@ export default function Evaluate() {
             
             <div className="border-t pt-6 mt-6">
               <h3 className="font-bold mb-4 text-center">결과 공유하기</h3>
-              <ShareCard 
+              <ShareCard
+                variant="OUTFIT"
                 imageUrl={result.imageUrl}
                 personaName={PERSONAS.find(p => p.id === result.persona)?.name || ""}
                 scores={result.scores as { harmony: number; trend: number; body: number }}
@@ -336,7 +337,8 @@ export default function Evaluate() {
         {multiResult.individual.length > 0 && (
           <div className="mt-8 border-t pt-8">
             <h3 className="font-bold text-xl mb-4 font-display text-center">대표 결과 공유하기</h3>
-            <ShareCard 
+            <ShareCard
+              variant="OUTFIT"
               imageUrl={multiResult.individual[0].imageUrl}
               personaName={PERSONAS.find(p => p.id === persona)?.name || ""}
               scores={multiResult.individual[0].scores}

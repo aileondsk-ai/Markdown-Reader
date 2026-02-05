@@ -2,10 +2,22 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
+import { OCCASION_NAMES, SEASON_NAMES } from "@shared/constants/occasion";
+import { PERSONA_PROMPTS } from "./prompts/persona";
+import {
+  buildRecommendationPrompt,
+  RECOMMENDATION_SYSTEM_PROMPT,
+} from "./prompts/recommendation";
 import { z } from "zod";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import { openai } from "./replit_integrations/image/client";
 import pLimit from "p-limit";
+
+/** 모니터링용: 에러 시 메서드·경로·메시지 로깅 (민감 정보 제외) */
+function logRouteError(req: { method: string; path: string }, err: unknown, label: string) {
+  const msg = err instanceof Error ? err.message : String(err);
+  console.error(`[${req.method}] ${req.path} ${label}:`, msg);
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -49,61 +61,6 @@ export async function registerRoutes(
     const result = await storage.getLatestSitResult((req.user as any).claims.sub);
     res.json(result || null);
   });
-
-  // === PERSONA PROMPTS ===
-  const PERSONA_PROMPTS = {
-    sujin: {
-      name: "패션 에디터 수진",
-      role: "10년 경력의 패션 매거진 에디터",
-      tone: "세련되고 전문적인 톤, 트렌드 용어를 자연스럽게 사용",
-      focus: [
-        "트렌드 적합성 (현재 시즌 트렌드와의 조화)",
-        "색상 조합의 완성도",
-        "아이템 간 밸런스와 전체적인 조화",
-        "소재 믹스의 세련됨"
-      ],
-      scoring: {
-        harmony: "색상, 소재, 실루엣의 조화도",
-        trend: "최신 트렌드 반영도와 적절한 해석",
-        body: "비율감과 전체적인 완성도"
-      },
-      style: "에디터다운 날카로운 분석과 함께 개선 포인트를 구체적으로 제시. 매거진 화보에서 볼 법한 표현 사용."
-    },
-    minsu: {
-      name: "포토그래퍼 민수", 
-      role: "스트리트 패션 사진작가",
-      tone: "친근하고 편안한 톤, 감성적인 표현 사용",
-      focus: [
-        "개인의 개성과 아이덴티티 표현",
-        "착장이 주는 분위기와 무드",
-        "진정성 있는 스타일링",
-        "사진에 담겼을 때의 비주얼 임팩트"
-      ],
-      scoring: {
-        harmony: "본인다움과 자연스러운 어울림",
-        trend: "트렌드를 자신만의 방식으로 소화한 정도",
-        body: "사진 속에서 보여질 전체적인 실루엣"
-      },
-      style: "카메라 앞에서 어떻게 보일지를 기준으로 평가. 스트리트 감성과 개성을 중시하며, 따뜻한 격려와 함께 조언."
-    },
-    jihyun: {
-      name: "스타일리스트 지현",
-      role: "연예인 전문 스타일리스트",
-      tone: "전문적이면서 다정한 톤, 구체적인 솔루션 제시",
-      focus: [
-        "체형 보완과 장점 부각",
-        "컬러 매칭과 피부톤 조화",
-        "TPO(시간, 장소, 상황)에 맞는 스타일링",
-        "디테일한 액세서리 활용"
-      ],
-      scoring: {
-        harmony: "아이템 간 조화와 전체 완성도",
-        trend: "트렌디함과 실용성의 균형",
-        body: "체형 보완 효과와 비율 연출"
-      },
-      style: "현실적이고 실용적인 조언 위주. 지금 당장 적용할 수 있는 구체적인 팁 제공. 대안 아이템도 제안."
-    }
-  };
 
   // === ASSESSMENT API ===
   app.post(api.assessments.create.path, async (req, res) => {
@@ -173,7 +130,7 @@ ${personaInfo.style}
 
       res.status(201).json(assessment);
     } catch (err) {
-      console.error(err);
+      logRouteError(req, err, "Assessment");
       res.status(500).json({ message: "Failed to analyze image" });
     }
   });
@@ -227,7 +184,7 @@ ${personaInfo.style}
       const stats = await storage.getAssessmentStats((req.user as any).claims.sub);
       res.json(stats);
     } catch (error) {
-      console.error('Stats API error:', error);
+      logRouteError(req, error, "Stats");
       res.json({
         totalCount: 0,
         averageScores: { harmony: 0, trend: 0, body: 0 },
@@ -355,7 +312,7 @@ ${images.length}장의 착장을 분석한 결과입니다.
         },
       });
     } catch (err) {
-      console.error(err);
+      logRouteError(req, err, "BatchAssessment");
       res.status(500).json({ message: "Failed to analyze images" });
     }
   });
@@ -401,7 +358,7 @@ ${images.length}장의 착장을 분석한 결과입니다.
       const conversation = await storage.createConversation(userId, persona, title);
       res.status(201).json(conversation);
     } catch (err) {
-      console.error(err);
+      logRouteError(req, err, "ChatConversation");
       res.status(400).json({ message: "대화를 시작할 수 없습니다" });
     }
   });
@@ -517,7 +474,7 @@ ${images.length}장의 착장을 분석한 결과입니다.
       
       res.status(201).json({ userMessage, aiMessage });
     } catch (err) {
-      console.error('Chat error:', err);
+      logRouteError(req, err, "Chat");
       res.status(500).json({ message: "메시지를 처리할 수 없습니다" });
     }
   });
@@ -546,74 +503,26 @@ ${images.length}장의 착장을 분석한 결과입니다.
       }
 
       const season = requestedSeason || getCurrentSeason();
-      
-      // Get user's SIT type if available
+
+      // Get user's SIT type if available (추천 엔진에 반영)
       const sitResult = await storage.getLatestSitResult(userId);
       const sitType = sitResult?.sitType || null;
 
-      // Define occasion names
-      const occasionNames: Record<string, string> = {
-        date_casual: '캐주얼 데이트',
-        date_special: '특별한 날 데이트',
-        business_work: '출근',
-        business_meeting: '프레젠테이션/미팅',
-        business_dinner: '회식',
-        first_interview: '면접',
-        first_blind_date: '소개팅',
-        daily_home: '재택근무',
-        daily_cafe: '카페',
-        daily_travel: '여행',
-        event_wedding: '결혼식',
-        event_party: '파티',
-        event_reunion: '동창회',
-      };
+      const occasionName = OCCASION_NAMES[occasion] || occasion;
+      const seasonName = SEASON_NAMES[season] || season;
 
-      const seasonNames: Record<string, string> = {
-        spring: '봄',
-        summer: '여름',
-        fall: '가을',
-        winter: '겨울',
-      };
-
-      const occasionName = occasionNames[occasion] || occasion;
-      const seasonName = seasonNames[season] || season;
-
-      // Build AI prompt
-      const prompt = `당신은 한국의 패션 스타일리스트입니다.
-다음 조건에 맞는 코디 추천을 JSON 형식으로 제공해주세요.
-
-조건:
-- 상황: ${occasionName}
-- 계절: ${seasonName}
-${sitType ? `- 사용자 스타일 유형: ${sitType}` : ''}
-
-다음 JSON 형식으로 정확히 응답해주세요:
-{
-  "outfitSet": {
-    "top": { "item": "아이템명", "color": "색상", "reason": "추천 이유" },
-    "bottom": { "item": "아이템명", "color": "색상", "reason": "추천 이유" },
-    "shoes": { "item": "아이템명", "color": "색상", "reason": "추천 이유" },
-    "accessory": { "item": "아이템명", "color": "색상", "reason": "추천 이유" }
-  },
-  "reasoning": "전체적인 코디 컨셉과 이 스타일을 추천한 이유 (2-3문장)",
-  "alternatives": [
-    {
-      "name": "대안 스타일 1",
-      "description": "간단한 설명"
-    },
-    {
-      "name": "대안 스타일 2", 
-      "description": "간단한 설명"
-    }
-  ]
-}`;
+      const prompt = buildRecommendationPrompt({
+        occasionName,
+        seasonName,
+        sitType,
+      });
 
       const { openai } = await import("./replit_integrations/image/client");
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: "gpt-4o-mini",
         messages: [
-          { role: 'system', content: '패션 스타일리스트로서 코디를 추천합니다. JSON 형식으로만 응답합니다.' },
-          { role: 'user', content: prompt }
+          { role: "system", content: RECOMMENDATION_SYSTEM_PROMPT },
+          { role: "user", content: prompt },
         ],
         max_tokens: 1000,
         response_format: { type: 'json_object' },
@@ -640,7 +549,7 @@ ${sitType ? `- 사용자 스타일 유형: ${sitType}` : ''}
 
       res.status(201).json(recommendation);
     } catch (err) {
-      console.error('Recommendation error:', err);
+      logRouteError(req, err, "Recommendation");
       res.status(500).json({ message: "추천을 생성할 수 없습니다" });
     }
   });

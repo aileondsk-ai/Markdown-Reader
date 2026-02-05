@@ -1,0 +1,47 @@
+# E2E 자동화 도입 검토
+
+> Planner & QA · 테스트 시나리오 자동화
+
+---
+
+## 1. 목적
+
+- 수동 테스트 시나리오(SIT/평가/추천/인증)를 자동 실행해 회귀 방지
+- PR 또는 main 머지 전 CI에서 E2E 실행 검토
+
+---
+
+## 2. 도구 비교 (요약)
+
+| 항목 | Playwright | Cypress |
+|------|------------|---------|
+| 언어 | JS/TS 기본 | JS/TS |
+| 브라우저 | Chromium, Firefox, WebKit | Chromium, Firefox, WebKit (최신) |
+| 속도 | 병렬·헤드리스에 유리 | 안정적, 대화형 디버깅 |
+| CI 연동 | GitHub Actions 등 용이 | 동일 |
+| 모바일/뷰포트 | 뷰포트 설정 간단 | 동일 |
+| 학습 곡선 | 보통 | 보통 |
+
+**추천**: **Playwright** — 멀티 브라우저·병렬 실행·공식 TS 지원이 잘 맞고, Vite/React 프로젝트와 조합하기 수월함.
+
+---
+
+## 3. 도입 시 다음 단계
+
+1. **설치**: `npm i -D @playwright/test`, `npx playwright install` (브라우저 바이너리)
+2. **설정**: `playwright.config.ts` — baseURL `http://localhost:5000`, webServer로 `npm run dev` 자동 기동
+3. **실행**: `npm run test:e2e` (또는 `npx playwright test`). 최소 1개 스펙: `e2e/sit.spec.ts` (SIT 페이지 접속·첫 질문 표시)
+4. **시나리오 매핑**:  
+   - `docs/work-ledger/04-Planner-QA.md`의 테스트 시나리오 초안을 1:1로 E2E 스펙으로 옮기기 (로그인 → SIT 12문항 → 결과 확인 → ShareCard 버튼 등)
+5. **로컬 실행**: `npm run test:e2e` (webServer가 dev 서버를 띄우므로 별도 터미널 불필요)
+6. **CI**: GitHub Actions 등에서 `npm run test:e2e` 실행 job 추가
+
+---
+
+## 4. 우선순위 제안
+
+- **1단계**: SIT 플로우 1건 (로그인 → 12문항 클릭 → 결과 페이지 존재 확인)
+- **2단계**: 평가 업로드·결과 존재, 추천 생성·목록 존재
+- **3단계**: 챗·기타 플로우, 다중 뷰포트
+
+이 문서는 검토용이며, 도입 결정 시 업무노트(04-Planner-QA)에 반영해 두면 됩니다.

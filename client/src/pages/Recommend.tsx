@@ -1,27 +1,32 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { 
-  Loader2, Sun, Cloud, Snowflake, Flower2, 
+import {
+  Loader2, Sun, Cloud, Snowflake, Flower2,
   Heart, Sparkles, Briefcase, Coffee, Users,
-  PartyPopper, ShoppingBag, Shirt, ChevronRight
+  PartyPopper, ShoppingBag, ChevronRight
 } from "lucide-react";
-import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import {
+  useRecommendations,
+  useCreateRecommendation,
+  useToggleRecommendationFavorite,
+  type Recommendation
+} from "@/hooks/use-recommendations";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import type { Recommendation, SitResult } from "@shared/schema";
+import type { SitResult } from "@shared/schema";
+import { SEASON_NAMES, OCCASION_NAMES } from "@shared/constants/occasion";
 
 const SEASONS = [
-  { id: 'spring', name: '봄', icon: Flower2, color: 'text-pink-500' },
-  { id: 'summer', name: '여름', icon: Sun, color: 'text-yellow-500' },
-  { id: 'fall', name: '가을', icon: Cloud, color: 'text-orange-500' },
-  { id: 'winter', name: '겨울', icon: Snowflake, color: 'text-blue-500' },
+  { id: 'spring', name: SEASON_NAMES.spring, icon: Flower2, color: 'text-pink-500' },
+  { id: 'summer', name: SEASON_NAMES.summer, icon: Sun, color: 'text-yellow-500' },
+  { id: 'fall', name: SEASON_NAMES.fall, icon: Cloud, color: 'text-orange-500' },
+  { id: 'winter', name: SEASON_NAMES.winter, icon: Snowflake, color: 'text-blue-500' },
 ];
 
 const OCCASION_CATEGORIES = [
@@ -29,43 +34,43 @@ const OCCASION_CATEGORIES = [
     name: '첫 만남',
     icon: Users,
     occasions: [
-      { id: 'first_interview', name: '면접' },
-      { id: 'first_blind_date', name: '소개팅' },
+      { id: 'first_interview', name: OCCASION_NAMES.first_interview },
+      { id: 'first_blind_date', name: OCCASION_NAMES.first_blind_date },
     ],
   },
   {
     name: '데이트',
     icon: Heart,
     occasions: [
-      { id: 'date_casual', name: '캐주얼' },
-      { id: 'date_special', name: '특별한 날' },
+      { id: 'date_casual', name: OCCASION_NAMES.date_casual },
+      { id: 'date_special', name: OCCASION_NAMES.date_special },
     ],
   },
   {
     name: '비즈니스',
     icon: Briefcase,
     occasions: [
-      { id: 'business_work', name: '출근' },
-      { id: 'business_meeting', name: '미팅' },
-      { id: 'business_dinner', name: '회식' },
+      { id: 'business_work', name: OCCASION_NAMES.business_work },
+      { id: 'business_meeting', name: OCCASION_NAMES.business_meeting },
+      { id: 'business_dinner', name: OCCASION_NAMES.business_dinner },
     ],
   },
   {
     name: '일상',
     icon: Coffee,
     occasions: [
-      { id: 'daily_home', name: '재택' },
-      { id: 'daily_cafe', name: '카페' },
-      { id: 'daily_travel', name: '여행' },
+      { id: 'daily_home', name: OCCASION_NAMES.daily_home },
+      { id: 'daily_cafe', name: OCCASION_NAMES.daily_cafe },
+      { id: 'daily_travel', name: OCCASION_NAMES.daily_travel },
     ],
   },
   {
     name: '특별 이벤트',
     icon: PartyPopper,
     occasions: [
-      { id: 'event_wedding', name: '결혼식' },
-      { id: 'event_party', name: '파티' },
-      { id: 'event_reunion', name: '동창회' },
+      { id: 'event_wedding', name: OCCASION_NAMES.event_wedding },
+      { id: 'event_party', name: OCCASION_NAMES.event_party },
+      { id: 'event_reunion', name: OCCASION_NAMES.event_reunion },
     ],
   },
 ];
@@ -103,48 +108,44 @@ export default function Recommend() {
   const [selectedRec, setSelectedRec] = useState<Recommendation | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
-  const { data: recommendations = [], isLoading: recsLoading } = useQuery<Recommendation[]>({
-    queryKey: ['/api/recommendations'],
-  });
+  const { data: recommendations = [], isLoading: recsLoading } = useRecommendations();
 
   const { data: sitResult } = useQuery<SitResult | null>({
     queryKey: ['/api/sit/latest'],
   });
 
-  const generateRecommendation = useMutation({
-    mutationFn: async (data: { occasion: string; season: string }) => {
-      const response = await apiRequest('POST', '/api/recommendations', data);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/recommendations'] });
-      setSelectedRec(data);
-      toast({
-        title: "추천 완료",
-        description: "코디 추천이 생성되었습니다",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "오류",
-        description: "추천을 생성할 수 없습니다",
-        variant: "destructive",
-      });
-    },
-  });
+  const createRecommendation = useCreateRecommendation();
+  const toggleFavoriteMutation = useToggleRecommendationFavorite();
 
-  const toggleFavorite = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await apiRequest('PATCH', `/api/recommendations/${id}/favorite`);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/recommendations'] });
-      if (selectedRec?.id === data.id) {
-        setSelectedRec(data);
-      }
-    },
-  });
+  // Wrap mutation with toast notifications
+  const handleCreateRecommendation = (data: { occasion: string; season: string }) => {
+    createRecommendation.mutate(data, {
+      onSuccess: (result) => {
+        setSelectedRec(result);
+        toast({
+          title: "추천 완료",
+          description: "코디 추천이 생성되었습니다",
+        });
+      },
+      onError: () => {
+        toast({
+          title: "오류",
+          description: "추천을 생성할 수 없습니다",
+          variant: "destructive",
+        });
+      },
+    });
+  };
+
+  const handleToggleFavorite = (id: number) => {
+    toggleFavoriteMutation.mutate(id, {
+      onSuccess: (data) => {
+        if (selectedRec?.id === data.id) {
+          setSelectedRec(data);
+        }
+      },
+    });
+  };
 
   const handleGenerateRecommendation = () => {
     if (!selectedOccasion) {
@@ -155,7 +156,7 @@ export default function Recommend() {
       });
       return;
     }
-    generateRecommendation.mutate({
+    handleCreateRecommendation({
       occasion: selectedOccasion,
       season: selectedSeason,
     });
@@ -222,8 +223,8 @@ export default function Recommend() {
                   <CardContent className="py-12 text-center">
                     <ShoppingBag className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground">저장된 추천이 없습니다</p>
-                    <Button 
-                      className="mt-4" 
+                    <Button
+                      className="mt-4"
                       onClick={() => setShowHistory(false)}
                       data-testid="button-go-to-recommend"
                     >
@@ -238,7 +239,7 @@ export default function Recommend() {
                       key={rec.id}
                       recommendation={rec}
                       onClick={() => setSelectedRec(rec)}
-                      onToggleFavorite={() => toggleFavorite.mutate(rec.id)}
+                      onToggleFavorite={() => handleToggleFavorite(rec.id)}
                       getOccasionName={getOccasionName}
                     />
                   ))}
@@ -260,7 +261,7 @@ export default function Recommend() {
                       key={rec.id}
                       recommendation={rec}
                       onClick={() => setSelectedRec(rec)}
-                      onToggleFavorite={() => toggleFavorite.mutate(rec.id)}
+                      onToggleFavorite={() => handleToggleFavorite(rec.id)}
                       getOccasionName={getOccasionName}
                     />
                   ))}
@@ -334,11 +335,11 @@ export default function Recommend() {
                 <Button
                   className="w-full"
                   size="lg"
-                  disabled={!selectedOccasion || generateRecommendation.isPending}
+                  disabled={!selectedOccasion || createRecommendation.isPending}
                   onClick={handleGenerateRecommendation}
                   data-testid="button-generate-recommendation"
                 >
-                  {generateRecommendation.isPending ? (
+                  {createRecommendation.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       추천 생성 중...
@@ -406,14 +407,14 @@ export default function Recommend() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => toggleFavorite.mutate(selectedRec.id)}
+                    onClick={() => handleToggleFavorite(selectedRec.id)}
                     data-testid="button-toggle-favorite"
                   >
                     <Heart className={`w-5 h-5 ${selectedRec.isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
                   </Button>
                 </div>
                 <DialogDescription>
-                  {SEASONS.find(s => s.id === selectedRec.season)?.name} | 
+                  {SEASONS.find(s => s.id === selectedRec.season)?.name} |
                   {selectedRec.sitType && ` ${selectedRec.sitType} 기반`}
                 </DialogDescription>
               </DialogHeader>
@@ -485,7 +486,7 @@ function RecommendationCard({
   const SeasonIcon = seasonInfo?.icon || Sun;
 
   return (
-    <Card 
+    <Card
       className="cursor-pointer hover-elevate"
       onClick={onClick}
       data-testid={`recommendation-card-${recommendation.id}`}
