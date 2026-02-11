@@ -13,6 +13,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   useRecommendations,
+  useRecommendation,
   useCreateRecommendation,
   useToggleRecommendationFavorite,
   type Recommendation
@@ -21,6 +22,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import type { SitResult } from "@shared/schema";
 import { SEASON_NAMES, OCCASION_NAMES } from "@shared/constants/occasion";
+import type { Product } from "@shared/types/products";
 
 const SEASONS = [
   { id: 'spring', name: SEASON_NAMES.spring, icon: Flower2, color: 'text-pink-500' },
@@ -116,6 +118,10 @@ export default function Recommend() {
 
   const createRecommendation = useCreateRecommendation();
   const toggleFavoriteMutation = useToggleRecommendationFavorite();
+
+  // 상세 조회 시 제품 추천(products) 포함 응답 사용 (목록에는 products 없음)
+  const { data: recWithProducts } = useRecommendation(selectedRec?.id ?? 0);
+  const displayRec = (recWithProducts ?? selectedRec) ?? null;
 
   // Wrap mutation with toast notifications
   const handleCreateRecommendation = (data: { occasion: string; season: string }) => {
@@ -397,32 +403,32 @@ export default function Recommend() {
 
       <Dialog open={!!selectedRec} onOpenChange={() => setSelectedRec(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          {selectedRec && (
+          {displayRec && (
             <>
               <DialogHeader>
                 <div className="flex items-center justify-between">
                   <DialogTitle className="text-xl">
-                    {getOccasionName(selectedRec.occasion)} 코디
+                    {getOccasionName(displayRec.occasion)} 코디
                   </DialogTitle>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleToggleFavorite(selectedRec.id)}
+                    onClick={() => handleToggleFavorite(displayRec.id)}
                     data-testid="button-toggle-favorite"
                   >
-                    <Heart className={`w-5 h-5 ${selectedRec.isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+                    <Heart className={`w-5 h-5 ${displayRec.isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
                   </Button>
                 </div>
                 <DialogDescription>
-                  {SEASONS.find(s => s.id === selectedRec.season)?.name} |
-                  {selectedRec.sitType && ` ${selectedRec.sitType} 기반`}
+                  {SEASONS.find(s => s.id === displayRec.season)?.name} |
+                  {displayRec.sitType && ` ${displayRec.sitType} 기반`}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-6 py-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   {(['top', 'bottom', 'shoes', 'accessory'] as const).map((key) => {
-                    const outfit = (selectedRec.outfitSet as OutfitSet)?.[key];
+                    const outfit = (displayRec.outfitSet as OutfitSet)?.[key];
                     if (!outfit) return null;
                     const labels = { top: '상의', bottom: '하의', shoes: '신발', accessory: '액세서리' };
                     return (
@@ -438,22 +444,59 @@ export default function Recommend() {
                   })}
                 </div>
 
+                {displayRec.products && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <ShoppingBag className="w-4 h-4" />
+                        추천 제품
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        코디에 어울리는 제품 예시 (목업 · 차후 DB/API 연동 예정)
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {(['top', 'bottom', 'shoes', 'accessory'] as const).map((key) => {
+                        const items = displayRec.products![key];
+                        if (!items?.length) return null;
+                        const labels = { top: '상의', bottom: '하의', shoes: '신발', accessory: '액세서리' };
+                        return (
+                          <div key={key}>
+                            <p className="text-sm font-medium text-muted-foreground mb-2">{labels[key]}</p>
+                            <ul className="space-y-2">
+                              {items.map((p: Product) => (
+                                <li key={p.id} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
+                                  <span className="font-medium">{p.name}</span>
+                                  {p.brand && <span className="text-muted-foreground">{p.brand}</span>}
+                                  {p.price != null && (
+                                    <span className="tabular-nums">{p.price.toLocaleString()}원</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                    </CardContent>
+                  </Card>
+                )}
+
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">스타일링 컨셉</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p>{selectedRec.reasoning}</p>
+                    <p>{displayRec.reasoning}</p>
                   </CardContent>
                 </Card>
 
-                {Array.isArray(selectedRec.alternatives) && selectedRec.alternatives.length > 0 && (
+                {Array.isArray(displayRec.alternatives) && displayRec.alternatives.length > 0 && (
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base">대안 스타일</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      {(selectedRec.alternatives as Alternative[]).map((alt: Alternative, i: number) => (
+                      {(displayRec.alternatives as Alternative[]).map((alt: Alternative, i: number) => (
                         <div key={i} className="p-3 rounded-lg bg-muted">
                           <p className="font-medium">{alt.name}</p>
                           <p className="text-sm text-muted-foreground">{alt.description}</p>

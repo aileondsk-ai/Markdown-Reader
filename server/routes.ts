@@ -8,6 +8,7 @@ import {
   buildRecommendationPrompt,
   RECOMMENDATION_SYSTEM_PROMPT,
 } from "./prompts/recommendation";
+import { getMockProductsByCategory } from "./mock-products";
 import { z } from "zod";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import { openai } from "./replit_integrations/image/client";
@@ -547,7 +548,11 @@ ${images.length}장의 착장을 분석한 결과입니다.
         isFavorite: false,
       });
 
-      res.status(201).json(recommendation);
+      // 스타일 추천과 함께 제품 추천(목업) 부착
+      res.status(201).json({
+        ...recommendation,
+        products: getMockProductsByCategory(),
+      });
     } catch (err) {
       logRouteError(req, err, "Recommendation");
       res.status(500).json({ message: "추천을 생성할 수 없습니다" });
@@ -579,7 +584,11 @@ ${images.length}장의 착장을 분석한 결과입니다.
     const userId = (req.user as any).claims.sub;
     if (rec.userId !== userId) return res.status(403).json({ message: "권한이 없습니다" });
 
-    res.json(rec);
+    // 스타일 추천과 함께 제품 추천(목업) 부착
+    res.json({
+      ...rec,
+      products: getMockProductsByCategory(),
+    });
   });
 
   // Toggle favorite
@@ -595,7 +604,10 @@ ${images.length}장의 착장을 분석한 결과입니다.
     if (rec.userId !== userId) return res.status(403).json({ message: "권한이 없습니다" });
 
     const updated = await storage.toggleRecommendationFavorite(id);
-    res.json(updated);
+    res.json({
+      ...updated,
+      products: getMockProductsByCategory(),
+    });
   });
 
   return httpServer;

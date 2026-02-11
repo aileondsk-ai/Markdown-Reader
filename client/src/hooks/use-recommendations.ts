@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { ProductsByCategory } from "@shared/types/products";
 
 // API paths (not yet in shared/routes.ts, using raw paths)
 const RECOMMENDATIONS_API = {
@@ -25,6 +26,8 @@ export interface Recommendation {
   alternatives: Array<{ name: string; description: string }> | null;
   isFavorite: boolean | null;
   createdAt: string;
+  /** 스타일 추천과 함께 제공되는 제품 추천(목업). 차후 DB/API 연동 시 동일 필드 사용 */
+  products?: ProductsByCategory;
 }
 
 /**
@@ -132,8 +135,9 @@ export function useToggleRecommendationFavorite() {
 
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: [RECOMMENDATIONS_API.list] });
+      queryClient.invalidateQueries({ queryKey: [RECOMMENDATIONS_API.list, id] });
     },
   });
 }

@@ -12,6 +12,7 @@
 | - | SIT 유형 정의 | client/src/lib/sit-types.ts (16종 닉네임, keywords, style, description) |
 | - | 추천 API 연동 | use-recommendations.ts (목록/개별/계절/생성/즐겨찾기), Recommend.tsx에서 사용 |
 | - | 패션 평가 프롬프트 | server/routes.ts PERSONA_PROMPTS (수진/민수/지현 역할·톤·평가 기준) |
+| 2026-02-11 | 스타일+제품 추천 병행(Phase 1) | API 레이어에서 제품 목업 부착, 공통 타입 shared/types/products.ts |
 
 ---
 
@@ -19,8 +20,14 @@
 
 - [ ] **SIT** 유형별 프롬프트/추천 문구 확장 (선택)
 - [ ] **추천** 상황별 프롬프트 템플릿 분리 시 `docs/ai/recommendation-prompt.md` 참고 (선택)
+- [ ] **챗봇** 프롬프트 분리 검토: `server/prompts/` 또는 `docs/ai/`에 챗 대화 시스템 프롬프트 이관 (선택)
 
 ---
+
+## 이번 세션 완료 (2026-02-11)
+
+- **다음 작업** 보강: 챗봇 프롬프트 분리 검토 제안 추가.
+- **스타일+제품 추천 병행**: 스타일 추천(AI 프롬프트 기존 유지)과 제품 추천을 API 레이어에서 병행. 제품은 목업으로 응답에 부착(`products`), AI 프롬프트 변경 없음. 공통 타입 `shared/types/products.ts`. 계획: `docs/work-ledger/작업계획-제품추천.md`.
 
 ## 이번 세션 완료 (2026-02-05)
 

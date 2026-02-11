@@ -12,6 +12,7 @@
 | - | 인증 분기 | server/replit_integrations/auth/index.ts 에서 isLocalDev 기준 Replit vs Local 선택 |
 | - | 로컬 DB 설정 스크립트 | script/setup-local-db.cjs (stylefinder DB·유저 생성) |
 | - | 시드 스크립트 | script/seed-mock-user.cjs (목 사용자 시딩) |
+| 2026-02-11 | 스타일+제품 추천 병행(Phase 1) | mock-products.ts, 추천 API 응답에 products 부착 |
 
 ---
 
@@ -19,8 +20,14 @@
 
 - [ ] **보안** 배포 후 실제 모니터링 실행 및 이슈 기록
 - [ ] **DB** 프로덕션에서 마이그레이션 파일 적용 전략 수립 (필요 시)
+- [ ] **API** 인증 필요 API 401 응답 형식 통일 점검 (JSON 본문·메시지 일관성)
 
 ---
+
+## 이번 세션 완료 (2026-02-11)
+
+- **다음 작업** 보강: API 401 응답 형식 통일 점검 제안 추가.
+- **스타일+제품 추천 병행**: 추천 API 응답에 제품 목록(목업) 부착. `server/mock-products.ts` — `getMockProductsByCategory()`, POST 생성·GET 단건·PATCH 즐겨찾기 응답에 `products` 필드 추가. 차후 DB/API 연동 시 목업 모듈만 교체. 계획: `docs/work-ledger/작업계획-제품추천.md`.
 
 ## 이번 세션 완료 (2026-02-05)
 
