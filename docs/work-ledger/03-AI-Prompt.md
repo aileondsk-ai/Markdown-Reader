@@ -20,7 +20,8 @@
 
 - [ ] **SIT** 유형별 프롬프트/추천 문구 확장 (선택)
 - [ ] **추천** 상황별 프롬프트 템플릿 분리 시 `docs/ai/recommendation-prompt.md` 참고 (선택)
-- [ ] **챗봇** 프롬프트 분리 검토: `server/prompts/` 또는 `docs/ai/`에 챗 대화 시스템 프롬프트 이관 (선택)
+- [x] **챗봇** 프롬프트 분리 검토: `server/prompts/` 또는 `docs/ai/`에 챗 대화 시스템 프롬프트 이관 (선택) — 2026-02-11 완료 (`server/prompts/chat.ts`)
+- [ ] **챗** 시스템 프롬프트 문서화: `docs/ai/chat-prompt.md`에 페르소나별 요약 정리 (선택)
 
 ---
 
@@ -28,6 +29,8 @@
 
 - **다음 작업** 보강: 챗봇 프롬프트 분리 검토 제안 추가.
 - **스타일+제품 추천 병행**: 스타일 추천(AI 프롬프트 기존 유지)과 제품 추천을 API 레이어에서 병행. 제품은 목업으로 응답에 부착(`products`), AI 프롬프트 변경 없음. 공통 타입 `shared/types/products.ts`. 계획: `docs/work-ledger/작업계획-제품추천.md`.
+- **챗봇 프롬프트 분리**: `server/prompts/chat.ts` 생성 — `CHAT_PERSONA_PROMPTS`(수진/민수/지현 시스템 프롬프트) 이관, `server/routes.ts`에서 import 사용.
+- **다음 작업 반영**: 챗봇 프롬프트 분리 검토 완료 표시, 챗 시스템 프롬프트 문서화(docs/ai/chat-prompt.md) 제안 추가.
 
 ## 이번 세션 완료 (2026-02-05)
 

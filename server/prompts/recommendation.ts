@@ -9,7 +9,7 @@ export interface RecommendationPromptParams {
 }
 
 export const RECOMMENDATION_SYSTEM_PROMPT =
-  "패션 스타일리스트로서 코디를 추천합니다. JSON 형식으로만 응답합니다.";
+  "You are a fashion stylist. Respond ONLY with a single valid JSON object, no markdown, no code block, no explanation. Use short text: item names under 15 chars, reason one short sentence, reasoning 1-2 sentences, alternatives brief. Required keys: outfitSet (top, bottom, shoes, accessory each: item, color, reason), reasoning (string), alternatives (array of { name, description }).";
 
 export function buildRecommendationPrompt(params: RecommendationPromptParams): string {
   const { occasionName, seasonName, sitType } = params;

@@ -19,7 +19,8 @@
 
 - [ ] **SIT 결과 페이지** 뷰포트 QA 체크리스트 기준으로 실제 기기/수동 QA 실행
 - [ ] **ShareCard** 공유 실패 시 안내 문구 A/B 테스트 (선택)
-- [ ] **History/Progress/Profile** 페이지 접근성(포커스·aria·키보드) 점검 (권장)
+- [x] **History/Progress/Profile** 페이지 접근성(포커스·aria·키보드) 점검 (권장) — 2026-02-11 완료 (main·aria-label·이전/다음 달 버튼)
+- [ ] **SIT 결과 페이지** 키보드 Tab 순서·포커스 스타일 검증 (선택)
 
 ---
 
@@ -28,6 +29,9 @@
 - **SIT 결과 페이지 뷰포트별 확인 포인트** 표 추가 (320/768/1024px 확인 포인트). 본 문서 §SIT 결과 페이지 뷰포트별 확인 포인트.
 - **다음 작업** 보강: History/Progress/Profile 접근성 점검 제안 추가.
 - **스타일+제품 추천 병행**: Recommend 페이지 추천 상세 다이얼로그에 "추천 제품" 카드 추가. `useRecommendation(id)`로 단건 조회 시 `products` 수신, 상의/하의/신발/액세서리별 목업 제품(이름·브랜드·가격) 표시. 계획: `docs/work-ledger/작업계획-제품추천.md`.
+- **History/Progress/Profile 접근성**: 각 페이지 루트를 `<main role="main" aria-label="...">`로 감싸고, History 이전/다음 달 버튼에 `aria-label` 추가.
+- **뷰포트 QA**: `docs/qa/viewport-qa-checklist.md` §4 "실행 후 기록" 플레이스홀더 표 추가.
+- **다음 작업 반영**: History/Progress/Profile 접근성 점검 완료 표시, "SIT 결과 페이지 키보드 Tab 순서·포커스 스타일 검증" 제안 추가.
 
 ## 이번 세션 완료 (2026-02-05)
 

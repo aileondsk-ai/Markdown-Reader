@@ -51,7 +51,8 @@ export function useCreateAssessment() {
           const error = await res.json();
           throw new Error(error.message || "잘못된 요청입니다");
         }
-        throw new Error("평가 생성에 실패했습니다");
+        const error = await res.json().catch(() => ({}));
+        throw new Error((error as { detail?: string }).detail || (error as { message?: string }).message || "평가 생성에 실패했습니다");
       }
 
       return api.assessments.create.responses[201].parse(await res.json());

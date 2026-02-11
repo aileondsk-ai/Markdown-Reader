@@ -133,10 +133,10 @@ export default function Recommend() {
           description: "코디 추천이 생성되었습니다",
         });
       },
-      onError: () => {
+      onError: (err) => {
         toast({
           title: "오류",
-          description: "추천을 생성할 수 없습니다",
+          description: err?.message ?? "추천을 생성할 수 없습니다",
           variant: "destructive",
         });
       },
@@ -465,11 +465,24 @@ export default function Recommend() {
                             <p className="text-sm font-medium text-muted-foreground mb-2">{labels[key]}</p>
                             <ul className="space-y-2">
                               {items.map((p: Product) => (
-                                <li key={p.id} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
-                                  <span className="font-medium">{p.name}</span>
-                                  {p.brand && <span className="text-muted-foreground">{p.brand}</span>}
+                                <li key={p.id} className="flex items-center gap-3 rounded-lg border px-3 py-2 text-sm">
+                                  {p.imageUrl ? (
+                                    <img
+                                      src={p.imageUrl}
+                                      alt={p.name}
+                                      className="h-14 w-14 shrink-0 rounded-md object-cover"
+                                    />
+                                  ) : (
+                                    <div className="h-14 w-14 shrink-0 rounded-md bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                                      No img
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <span className="font-medium block truncate">{p.name}</span>
+                                    {p.brand && <span className="text-muted-foreground text-xs">{p.brand}</span>}
+                                  </div>
                                   {p.price != null && (
-                                    <span className="tabular-nums">{p.price.toLocaleString()}원</span>
+                                    <span className="tabular-nums shrink-0">{p.price.toLocaleString()}원</span>
                                   )}
                                 </li>
                               ))}

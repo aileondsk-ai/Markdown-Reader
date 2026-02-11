@@ -44,4 +44,19 @@
 - **2단계**: 평가 업로드·결과 존재, 추천 생성·목록 존재
 - **3단계**: 챗·기타 플로우, 다중 뷰포트
 
+---
+
+## 5. E2E 실행 시 DB 및 로그인
+
+인증·DB를 사용하는 스펙(`auth-flow.spec.ts` 등)을 안정적으로 실행하려면 아래를 준비합니다.
+
+| 항목 | 내용 |
+|------|------|
+| **DB** | PostgreSQL 기동, `DATABASE_URL` 설정. `npm run db:push`로 스키마 적용(users, sit_results, recommendations 등). 테이블이 없으면 추천 API가 500을 반환할 수 있음 |
+| **로그인** | 로컬 개발 시 `REPL_ID` 미설정이면 mock 인증 사용. GET `/api/login` 방문 시 mock 유저로 세션 생성·DB에 `users` upsert |
+| **헬스** | `GET /api/health` 로 서버·DB 상태 확인 가능. 200 + `{ ok: true, db: "ok" }` 이면 E2E 진행 가능 |
+| **실행 순서** | 1) DB 기동 및 스키마 적용 2) `npm run test:e2e` (webServer가 `npm run dev`로 서버 기동) |
+
+E2E에서 로그인 연동 플로우는 `e2e/auth-flow.spec.ts`에 정의되어 있으며, `/api/login` 방문 후 프로필·추천 페이지 접근을 검증합니다.
+
 이 문서는 검토용이며, 도입 결정 시 업무노트(04-Planner-QA)에 반영해 두면 됩니다.

@@ -104,7 +104,8 @@ export function useCreateRecommendation() {
           const error = await res.json();
           throw new Error(error.message || "잘못된 요청입니다");
         }
-        throw new Error("추천 생성에 실패했습니다");
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.detail || error.message || "추천 생성에 실패했습니다");
       }
 
       return res.json();

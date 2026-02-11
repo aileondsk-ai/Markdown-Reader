@@ -19,8 +19,9 @@
 ## 다음 작업
 
 - [ ] **보안** 배포 후 실제 모니터링 실행 및 이슈 기록
-- [ ] **DB** 프로덕션에서 마이그레이션 파일 적용 전략 수립 (필요 시)
-- [ ] **API** 인증 필요 API 401 응답 형식 통일 점검 (JSON 본문·메시지 일관성)
+- [ ] **DB** 프로덕션에서 마이그레이션 파일 적용 전략 수립 (필요 시) — `docs/development/db-migration.md` §6 참고
+- [x] **API** 인증 필요 API 401 응답 형식 통일 점검 (JSON 본문·메시지 일관성) — 2026-02-11 완료 (sendUnauthorized)
+- [x] **헬스 엔드포인트** 배포 환경 헬스 체크용 GET 경로 추가 (선택) — 2026-02-11 완료 (`GET /api/health`, DB 연결 확인)
 
 ---
 
@@ -28,6 +29,11 @@
 
 - **다음 작업** 보강: API 401 응답 형식 통일 점검 제안 추가.
 - **스타일+제품 추천 병행**: 추천 API 응답에 제품 목록(목업) 부착. `server/mock-products.ts` — `getMockProductsByCategory()`, POST 생성·GET 단건·PATCH 즐겨찾기 응답에 `products` 필드 추가. 차후 DB/API 연동 시 목업 모듈만 교체. 계획: `docs/work-ledger/작업계획-제품추천.md`.
+- **추천 생성 불가 원인 대응**: 기존 OpenAI 키 미설정 시 추천 생성 실패 → **Gemini API**로 추천 생성 전환. `server/gemini-client.ts` 추가, `GEMINI_API_KEY` 설정 시 Gemini(기본 gemini-2.5-flash) 사용, 미설정 시 기존 OpenAI 폴백. `.env.example`에 GEMINI 변수 안내. (이후 POST 500 대응: 기본 모델명 수정, JSON 파싱·검증 보강.)
+- **API 401 응답 형식 통일**: `sendUnauthorized(res)` 도입 — 인증 필요 API가 `res.status(401).json({ error: "Unauthorized", message: "로그인이 필요합니다" })`로 통일. `res.sendStatus(401)` 호출 전부 교체.
+- **모니터링 실행 기록**: `docs/development/production-checklist.md` §6.1 모니터링 실행 기록 템플릿 표 추가.
+- **다음 작업 반영**: API 401 통일 점검 완료 표시, 헬스 엔드포인트 제안 추가. DB 마이그레이션 전략은 db-migration.md §6 링크 명시.
+- **헬스 엔드포인트**: `GET /api/health` 추가. 인증 불필요, `SELECT 1`로 DB 연결 확인. 200 시 `{ ok: true, db: "ok" }`, 실패 시 503. production-checklist §5·§6에 반영.
 
 ## 이번 세션 완료 (2026-02-05)
 

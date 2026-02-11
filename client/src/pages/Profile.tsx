@@ -36,7 +36,7 @@ export default function Profile() {
   const typeInfo = sitResult ? SIT_TYPES[sitResult.sitType as keyof typeof SIT_TYPES] : null;
 
   return (
-    <div className="container max-w-6xl mx-auto px-4 py-12">
+    <main className="container max-w-6xl mx-auto px-4 py-12" role="main" aria-label="프로필">
       <div className="grid md:grid-cols-3 gap-8">
         
         {/* Sidebar: User Info & SIT Type */}
@@ -143,6 +143,6 @@ export default function Profile() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }

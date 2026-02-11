@@ -208,9 +208,9 @@ export default function Progress() {
   };
 
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-8 md:py-12">
+    <main className="container max-w-7xl mx-auto px-4 py-8 md:py-12" role="main" aria-label="스타일 변화 추적">
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-display font-bold mb-2" data-testid="text-page-title">
+        <h1 className="text-3xl md:text-4xl font-display font-bold mb-2" id="progress-heading" data-testid="text-page-title">
           스타일 변화 추적
         </h1>
         <p className="text-muted-foreground">
@@ -559,6 +559,6 @@ export default function Progress() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }

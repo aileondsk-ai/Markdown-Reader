@@ -120,9 +120,9 @@ export default function History() {
   if (!user) return null;
 
   return (
-    <div className="container max-w-6xl mx-auto px-4 py-12">
+    <main className="container max-w-6xl mx-auto px-4 py-12" role="main" aria-label="코디 히스토리">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold font-display mb-2">코디 히스토리</h1>
+        <h1 className="text-3xl font-bold font-display mb-2" id="history-heading">코디 히스토리</h1>
         <p className="text-muted-foreground">시간에 따른 나의 스타일 변화를 확인해보세요</p>
       </div>
 
@@ -135,6 +135,7 @@ export default function History() {
                 size="icon" 
                 onClick={goToPrevMonth}
                 data-testid="button-prev-month"
+                aria-label="이전 달"
               >
                 <ChevronLeft className="w-5 h-5" />
               </Button>
@@ -146,6 +147,7 @@ export default function History() {
                 size="icon" 
                 onClick={goToNextMonth}
                 data-testid="button-next-month"
+                aria-label="다음 달"
               >
                 <ChevronRight className="w-5 h-5" />
               </Button>
@@ -452,6 +454,6 @@ export default function History() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </main>
   );
 }
