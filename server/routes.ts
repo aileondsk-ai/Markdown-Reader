@@ -562,6 +562,11 @@ ${images.length}장의 착장을 분석한 결과입니다.
     res.json(recs);
   });
 
+  // Get current season (고정 경로는 :id보다 먼저 등록)
+  app.get('/api/recommendations/season', async (req, res) => {
+    res.json({ season: getCurrentSeason() });
+  });
+
   // Get single recommendation
   app.get('/api/recommendations/:id', async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -591,11 +596,6 @@ ${images.length}장의 착장을 분석한 결과입니다.
 
     const updated = await storage.toggleRecommendationFavorite(id);
     res.json(updated);
-  });
-
-  // Get current season
-  app.get('/api/recommendations/season', async (req, res) => {
-    res.json({ season: getCurrentSeason() });
   });
 
   return httpServer;
