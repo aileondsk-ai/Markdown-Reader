@@ -1,10 +1,11 @@
 /**
- * Local Development Mock Auth
- * 
- * Bypasses Replit Auth for local development.
- * Creates a mock user session without OIDC.
+ * Local / Vercel Development Auth
+ *
+ * Bypasses Replit Auth for environments without REPL_ID.
+ * Uses pg session store when DATABASE_URL is available (required for serverless).
  */
 import session from "express-session";
+import connectPg from "connect-pg-simple";
 import type { Express, RequestHandler } from "express";
 import { authStorage } from "./storage";
 
@@ -22,18 +23,33 @@ const MOCK_USER = {
     },
     access_token: "mock-access-token",
     refresh_token: "mock-refresh-token",
-    expires_at: Math.floor(Date.now() / 1000) + 86400 * 7, // 1 week from now
+    expires_at: Math.floor(Date.now() / 1000) + 86400 * 7,
 };
 
 export function getSession() {
     const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+    const isProduction = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
+
+    let store: session.Store | undefined;
+    if (process.env.DATABASE_URL) {
+        const PgStore = connectPg(session);
+        store = new PgStore({
+            conString: process.env.DATABASE_URL,
+            createTableIfMissing: true,
+            ttl: sessionTtl / 1000,
+            tableName: "sessions",
+        });
+    }
+
     return session({
         secret: process.env.SESSION_SECRET || "local-dev-secret-key",
+        store,
         resave: false,
         saveUninitialized: false,
         cookie: {
             httpOnly: true,
-            secure: false, // Allow HTTP for local dev
+            secure: isProduction,
+            sameSite: isProduction ? "none" as const : "lax" as const,
             maxAge: sessionTtl,
         },
     });
@@ -43,7 +59,6 @@ export async function setupAuth(app: Express) {
     app.set("trust proxy", 1);
     app.use(getSession());
 
-    // Simple passport-like session handling
     app.use((req: any, res, next) => {
         if (req.session.user) {
             req.user = req.session.user;
@@ -58,11 +73,9 @@ export async function setupAuth(app: Express) {
 }
 
 export function registerAuthRoutes(app: Express) {
-    // Mock login - automatically logs in as mock user
     app.get("/api/login", async (req: any, res) => {
         req.session.user = MOCK_USER;
 
-        // Ensure user exists in DB
         await authStorage.upsertUser({
             id: MOCK_USER.claims.sub,
             email: MOCK_USER.claims.email,
@@ -75,12 +88,10 @@ export function registerAuthRoutes(app: Express) {
         res.redirect("/");
     });
 
-    // Mock callback (not really needed but keeps API compatible)
     app.get("/api/callback", (req, res) => {
         res.redirect("/");
     });
 
-    // Logout
     app.get("/api/logout", (req: any, res) => {
         req.session.destroy((err: any) => {
             if (err) console.error("Session destroy error:", err);
@@ -88,7 +99,6 @@ export function registerAuthRoutes(app: Express) {
         });
     });
 
-    // User info endpoint
     app.get("/api/auth/user", (req: any, res) => {
         if (req.isAuthenticated()) {
             const user = req.session.user;
