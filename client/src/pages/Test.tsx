@@ -242,8 +242,11 @@ export default function Test() {
     );
   }
 
-  const progress = ((currentStep + 1) / questions.length) * 100;
-  const currentQ = questions[currentStep];
+  const safeStep = Math.min(currentStep, questions.length - 1);
+  const progress = ((safeStep + 1) / questions.length) * 100;
+  const currentQ = questions[safeStep];
+
+  if (!currentQ) return null;
 
   return (
     <div className="container max-w-xl mx-auto px-4 py-12 sm:py-20 md:py-32">
