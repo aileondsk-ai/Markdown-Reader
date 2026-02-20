@@ -51,8 +51,8 @@ npm run db:push
 npm run dev
 ```
 
-- **포트**: 5001 (macOS AirPlay가 5000 사용 시 `.env`에 `PORT=5001` 설정됨)
-- **URL**: http://localhost:5001
+- **포트**: 3000 (macOS AirPlay가 5000 사용, 기존 충돌 방지로 `.env`에 `PORT=3000` 설정됨)
+- **URL**: http://localhost:3000
 
 ---
 
