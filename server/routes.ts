@@ -98,7 +98,7 @@ ${personaInfo.style}
       `;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-5.2", // Use best model for vision
+        model: "gemini-2.0-flash",
         messages: [
           { role: "system", content: "You are a helpful fashion assistant." },
           { 
@@ -235,7 +235,7 @@ ${personaInfo.style}
         `;
 
         const response = await openai.chat.completions.create({
-          model: "gpt-5.2",
+          model: "gemini-2.0-flash",
           messages: [
             { role: "system", content: "You are a helpful fashion assistant." },
             { 
@@ -294,7 +294,7 @@ ${images.length}장의 착장을 분석한 결과입니다.
       `;
 
       const summaryResponse = await openai.chat.completions.create({
-        model: "gpt-5.2",
+        model: "gemini-2.0-flash",
         messages: [
           { role: "system", content: "You are a helpful fashion assistant. Respond in Korean." },
           { role: "user", content: summaryPrompt }
@@ -464,7 +464,7 @@ ${images.length}장의 착장을 분석한 결과입니다.
       // Call AI
       const { openai } = await import("./replit_integrations/image/client");
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gemini-2.0-flash',
         messages: aiMessages as any,
         max_tokens: 1000,
       });
@@ -519,7 +519,7 @@ ${images.length}장의 착장을 분석한 결과입니다.
 
       const { openai } = await import("./replit_integrations/image/client");
       const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gemini-2.0-flash",
         messages: [
           { role: "system", content: RECOMMENDATION_SYSTEM_PROMPT },
           { role: "user", content: prompt },
