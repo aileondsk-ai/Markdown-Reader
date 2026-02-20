@@ -109,14 +109,15 @@ ${personaInfo.style}
             ] 
           }
         ],
-        response_format: { type: "json_object" },
-        max_completion_tokens: 1000,
+        max_tokens: 1000,
       });
 
       const content = response.choices[0].message.content;
       if (!content) throw new Error("No response from AI");
 
-      const aiData = JSON.parse(content);
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("No JSON in response");
+      const aiData = JSON.parse(jsonMatch[0]);
 
       const assessment = await storage.createAssessment({
         userId,
@@ -246,14 +247,15 @@ ${personaInfo.style}
               ] 
             }
           ],
-          response_format: { type: "json_object" },
-          max_completion_tokens: 1000,
+          max_tokens: 1000,
         });
 
         const content = response.choices[0].message.content;
         if (!content) throw new Error("No response from AI");
 
-        const aiData = JSON.parse(content);
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("No JSON in response");
+        const aiData = JSON.parse(jsonMatch[0]);
 
         const assessment = await storage.createAssessment({
           userId,
@@ -299,7 +301,7 @@ ${images.length}장의 착장을 분석한 결과입니다.
           { role: "system", content: "You are a helpful fashion assistant. Respond in Korean." },
           { role: "user", content: summaryPrompt }
         ],
-        max_completion_tokens: 500,
+        max_tokens: 500,
       });
 
       const overallFeedback = summaryResponse.choices[0].message.content || "종합 분석을 생성하지 못했습니다.";
@@ -525,7 +527,6 @@ ${images.length}장의 착장을 분석한 결과입니다.
           { role: "user", content: prompt },
         ],
         max_tokens: 1000,
-        response_format: { type: 'json_object' },
       });
 
       const aiContent = response.choices[0]?.message?.content;
@@ -533,7 +534,11 @@ ${images.length}장의 착장을 분석한 결과입니다.
         return res.status(500).json({ message: "추천을 생성할 수 없습니다" });
       }
 
-      const parsed = JSON.parse(aiContent);
+      const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        return res.status(500).json({ message: "추천 형식 오류" });
+      }
+      const parsed = JSON.parse(jsonMatch[0]);
 
       // Save recommendation
       const recommendation = await storage.createRecommendation({

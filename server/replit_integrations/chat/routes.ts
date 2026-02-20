@@ -85,7 +85,7 @@ export function registerChatRoutes(app: Express): void {
         model: "gemini-3-pro-preview",
         messages: chatMessages,
         stream: true,
-        max_completion_tokens: 2048,
+        max_tokens: 2048,
       });
 
       let fullResponse = "";
