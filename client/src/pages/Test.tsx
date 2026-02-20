@@ -157,14 +157,24 @@ export default function Test() {
     }
   }, [isSuccess, result]);
 
+  const [transitioning, setTransitioning] = useState(false);
+
   const onOptionClick = (value: string) => {
-    const newAnswers = { ...answers, [questions[currentStep].id]: value };
+    if (transitioning || currentStep >= questions.length) return;
+
+    const currentQuestion = questions[currentStep];
+    if (!currentQuestion) return;
+
+    const newAnswers = { ...answers, [currentQuestion.id]: value };
     setAnswers(newAnswers);
 
     if (currentStep < questions.length - 1) {
-      setTimeout(() => setCurrentStep(prev => prev + 1), 250);
+      setTransitioning(true);
+      setTimeout(() => {
+        setCurrentStep(prev => Math.min(prev + 1, questions.length - 1));
+        setTransitioning(false);
+      }, 250);
     } else {
-      // 모든 질문 완료 - 점수 계산 후 제출
       const { sitType, scores } = calculateSitResult(newAnswers);
       submitTest({ answers: newAnswers, calculatedType: sitType, scores }, {
         onError: (err) => {
