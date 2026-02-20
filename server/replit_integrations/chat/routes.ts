@@ -82,7 +82,7 @@ export function registerChatRoutes(app: Express): void {
 
       // Stream response from OpenAI
       const stream = await openai.chat.completions.create({
-        model: "gemini-2.0-flash",
+        model: "gemini-3-pro-preview",
         messages: chatMessages,
         stream: true,
         max_completion_tokens: 2048,

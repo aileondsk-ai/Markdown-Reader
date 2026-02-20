@@ -11,7 +11,7 @@ export function registerImageRoutes(app: Express): void {
       }
 
       const response = await openai.images.generate({
-        model: "gemini-2.0-flash",
+        model: "gemini-3-pro-preview",
         prompt,
         n: 1,
         size: size as "1024x1024" | "512x512" | "256x256",

@@ -16,7 +16,7 @@ export async function generateImageBuffer(
   size: "1024x1024" | "512x512" | "256x256" = "1024x1024"
 ): Promise<Buffer> {
   const response = await openai.images.generate({
-    model: "gemini-2.0-flash",
+    model: "gemini-3-pro-preview",
     prompt,
     size,
   });
@@ -42,7 +42,7 @@ export async function editImages(
   );
 
   const response = await openai.images.edit({
-    model: "gemini-2.0-flash",
+    model: "gemini-3-pro-preview",
     image: images,
     prompt,
   });

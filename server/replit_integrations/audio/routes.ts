@@ -95,7 +95,7 @@ export function registerAudioRoutes(app: Express): void {
 
       // 6. Stream audio response from gpt-audio
       const stream = await openai.chat.completions.create({
-        model: "gemini-2.0-flash",
+        model: "gemini-3-pro-preview",
         modalities: ["text", "audio"],
         audio: { voice, format: "pcm16" },
         messages: chatHistory,
