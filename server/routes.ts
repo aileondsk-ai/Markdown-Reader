@@ -19,6 +19,19 @@ function logRouteError(req: { method: string; path: string }, err: unknown, labe
   console.error(`[${req.method}] ${req.path} ${label}:`, msg);
 }
 
+/** Gemini 응답에서 JSON을 안전하게 추출 */
+function extractJSON(text: string): any {
+  // 1) 마크다운 코드블록 제거
+  let cleaned = text.replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
+  // 2) 가장 바깥 { ... } 추출
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("No JSON found in AI response");
+  let jsonStr = match[0];
+  // 3) trailing comma 제거 (Gemini가 자주 생성)
+  jsonStr = jsonStr.replace(/,\s*([\]}])/g, "$1");
+  return JSON.parse(jsonStr);
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -114,15 +127,13 @@ ${personaInfo.style}
 
       const content = response.choices[0].message.content;
       if (!content) throw new Error("No response from AI");
+      console.log("[Assessment] AI raw response:", content.substring(0, 500));
 
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("No JSON in response");
-      const aiData = JSON.parse(jsonMatch[0]);
+      const aiData = extractJSON(content);
 
       const assessment = await storage.createAssessment({
         userId,
-        imageUrl: image, // In production, upload to object storage and save URL. For MVP, base64 (beware size limits)
-        // Note: Base64 in DB is bad practice for large scale, but acceptable for MVP with small users.
+        imageUrl: image,
         // Better: Use Object Storage integration if available.
         persona,
         scores: aiData.scores,
@@ -253,9 +264,7 @@ ${personaInfo.style}
         const content = response.choices[0].message.content;
         if (!content) throw new Error("No response from AI");
 
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error("No JSON in response");
-        const aiData = JSON.parse(jsonMatch[0]);
+        const aiData = extractJSON(content);
 
         const assessment = await storage.createAssessment({
           userId,
@@ -534,11 +543,7 @@ ${images.length}장의 착장을 분석한 결과입니다.
         return res.status(500).json({ message: "추천을 생성할 수 없습니다" });
       }
 
-      const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        return res.status(500).json({ message: "추천 형식 오류" });
-      }
-      const parsed = JSON.parse(jsonMatch[0]);
+      const parsed = extractJSON(aiContent);
 
       // Save recommendation
       const recommendation = await storage.createRecommendation({
