@@ -1,4 +1,4 @@
-import { app, initApp } from "../server/app";
+import { app, initApp } from "./app";
 import type { IncomingMessage, ServerResponse } from "http";
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {

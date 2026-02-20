@@ -10,3 +10,4 @@ test-results/
 .playwright/
 .local/
 .vercel
+api/index.mjs
